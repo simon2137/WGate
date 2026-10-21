@@ -1,9 +1,15 @@
 import { router } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { notificationManager } from '@kit.NotificationKit';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 import { Palette, Type, ROW_PAD_H, BAR_SPACE , FONT} from '../theme/Theme';
 import { SurfaceRow, SectionHeader } from '../components/SurfaceRow';
 import { SettingsStore } from '../service/SettingsStore';
 import { Tr } from '../i18n/Tr';
+
+const DOMAIN: number = 0x0001;
+const TAG: string = 'Notifications';
 
 /**
  * `ui/screens/settings/appearance/notifications/NotificationsScreen.kt`: the
@@ -27,6 +33,27 @@ struct Notifications {
     this.transfer = SettingsStore.notification('transfer');
     this.recovery = SettingsStore.notification('recovery');
     this.failureTint = SettingsStore.notification('failure_tint');
+  }
+
+  /**
+   * Opens this app's notification page in the system settings: the HarmonyOS
+   * counterpart of the reference app's `ACTION_APP_NOTIFICATION_SETTINGS`
+   * intent. Error 1600018 only means that window is already up, which is not a
+   * failure; a device without the settings window at all (801) falls back to the
+   * system's own "allow notifications" prompt, so the tap still does something
+   * the user can see instead of looking broken.
+   */
+  private openSystemNotificationSettings(): void {
+    const context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext;
+    notificationManager.openNotificationSettings(context).catch((error: BusinessError) => {
+      if (error.code === 1600018) {
+        return;
+      }
+      hilog.warn(DOMAIN, TAG, 'openNotificationSettings: %{public}s', JSON.stringify(error));
+      notificationManager.requestEnableNotification(context).catch((fallback: BusinessError) => {
+        hilog.warn(DOMAIN, TAG, 'requestEnableNotification: %{public}s', JSON.stringify(fallback));
+      });
+    });
   }
 
   build() {
@@ -68,6 +95,17 @@ struct Notifications {
 
       Scroll() {
         Column() {
+          // The reference puts this above the switches and outside the section
+          // headers: it is not a setting of ours, it is the way out to the page
+          // where the system actually controls this app's notifications.
+          SurfaceRow({
+            title: Tr.t('Settings'),
+            icon: $r('app.media.ic_settings'),
+            trailingIcon: $r('app.media.ic_launch'),
+            onTap: () => {
+              this.openSystemNotificationSettings();
+            }
+          })
           SectionHeader({ label: Tr.t('Live updates') })
           SurfaceRow({
             title: Tr.t('Enable'),

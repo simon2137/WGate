@@ -24,6 +24,12 @@ export struct SurfaceRow {
   @Prop highlight: boolean = false;
   @Prop trailingText: string = '';
   @Prop chevron: boolean = false;
+  /**
+   * A trailing glyph instead of the chevron, for a row that leaves the app
+   * instead of opening a page inside it (`Icons.AutoMirrored.Outlined.Launch`
+   * in the reference rows).
+   */
+  @Prop trailingIcon: Resource | null = null;
   @Prop hasSwitch: boolean = false;
   @Prop switchOn: boolean = false;
   onSwitch: (on: boolean) => void = () => {};
@@ -70,6 +76,13 @@ export struct SurfaceRow {
             .onChange((on: boolean) => {
               this.onSwitch(on);
             })
+        } else if (this.trailingIcon !== null) {
+          // 24vp: the trailing icon of a Material row is drawn at the icon size.
+          Image(this.trailingIcon)
+            .width(24)
+            .height(24)
+            .fillColor(Palette.MUTED)
+            .draggable(false)
         } else if (this.chevron) {
           Image($r('app.media.ic_chevron_down'))
             .width(20)
