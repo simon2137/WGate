@@ -30,9 +30,11 @@ WGate 是一个 **HarmonyOS（鸿蒙）上的 WireGuard 客户端**。它把你�
 
 ## 截图
 
-| 手机上 | 电脑上（PC 模式） |
+| 浅色 | 深色 |
 | --- | --- |
-| ![自动隧道页](docs/img/phone.jpg) | ![PC 模式](docs/img/pc.jpg) |
+| ![自动隧道页（浅色）](docs/img/phone-light.jpg) | ![自动隧道页（深色）](docs/img/phone-dark.jpg) |
+
+> 图上是「自动隧道」页。带开关的行右侧如果还有一个 `›`，说明点这一行本身还能进下一页（Wi-Fi 规则、首选隧道）；只有开关的行就只切换状态。
 
 ## 安装
 
