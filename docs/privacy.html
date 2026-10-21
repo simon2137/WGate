@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WGate 隐私政策</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0 auto; max-width: 46rem; padding: 2.5rem 1.25rem 4rem;
+    font: 16px/1.75 -apple-system, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #1b1f23; background: #fff;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e8ea; background: #16181a; }
+    th { background: #22262a; }
+    td, th { border-color: #33383d; }
+    h1, h2 { color: #fff; }
+  }
+  h1 { font-size: 1.75rem; margin: 0 0 .5rem; letter-spacing: -.01em; }
+  h2 { font-size: 1.15rem; margin: 2.5rem 0 .75rem; padding-bottom: .4rem; border-bottom: 1px solid #e3e6e8; }
+  .meta { color: #6a737c; font-size: .9rem; margin-bottom: 2rem; }
+  .meta code { background: #f2f4f6; padding: .1em .4em; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .92rem; }
+  th, td { border: 1px solid #e3e6e8; padding: .55rem .7rem; text-align: left; vertical-align: top; }
+  th { background: #f6f8f9; font-weight: 600; }
+  strong { font-weight: 600; }
+  footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid #e3e6e8; color: #6a737c; font-size: .85rem; }
+  a { color: #0a6c8a; }
+</style>
+</head>
+<body>
+
+<h1>WGate 隐私政策</h1>
+<p class="meta">
+  <strong>生效日期</strong>：2026 年 10 月 21 日<br>
+  <strong>适用应用</strong>：WGate（HarmonyOS 版，包名 <code>com.wgate.app</code>）
+</p>
+
+<h2>一、我们收集哪些信息</h2>
+<p><strong>不收集。</strong> WGate 没有账号体系，不要求你注册或登录，也不会上报使用行为、设备标识、崩溃日志或统计数据。</p>
+<p>应用运行过程中产生的以下内容，全部只保存在你自己的设备上：</p>
+<table>
+  <tr><th>内容</th><th>存放位置</th><th>是否会离开设备</th></tr>
+  <tr><td>隧道配置（含私钥、对端公钥、地址、AllowedIPs 等）</td><td>应用私有配置存储</td><td>否。只有你主动执行“导出备份”或“显示二维码”时，才会以你可见的形式输出</td></tr>
+  <tr><td>应用设置（主题、语言、自动隧道规则、分应用代理名单等）</td><td>应用私有配置存储</td><td>否</td></tr>
+  <tr><td>启动与内核事件日志</td><td>应用私有文件目录</td><td>否。你可以随时在“设置 → 本地日志”里查看、清空或导出</td></tr>
+  <tr><td>连接期间的收发流量字节数、握手时间</td><td>仅内存中统计</td><td>否</td></tr>
+</table>
+
+<h2>二、应用申请的权限及用途</h2>
+<table>
+  <tr><th>权限</th><th>用途</th><th>何时使用</th></tr>
+  <tr><td><code>ohos.permission.INTERNET</code></td><td>建立加密隧道，与你配置的服务器通信</td><td>隧道连接期间</td></tr>
+  <tr><td><code>ohos.permission.GET_NETWORK_INFO</code></td><td>识别当前网络类型（Wi-Fi / 移动数据 / 以太网），用于自动隧道与断线重连</td><td>网络状态变化时</td></tr>
+  <tr><td><code>ohos.permission.GET_WIFI_INFO</code></td><td>读取当前 Wi-Fi 名称，用于匹配“连上哪个 Wi-Fi 就启动哪条隧道”的规则</td><td>网络切换时</td></tr>
+  <tr><td><code>ohos.permission.KEEP_BACKGROUND_RUNNING</code></td><td>应用切到后台时保持隧道连接，并在通知栏显示当前隧道与流量</td><td>应用在后台时</td></tr>
+  <tr><td><code>ohos.permission.CAMERA</code></td><td>扫描 WireGuard 配置二维码</td><td>仅在你点击“扫描二维码”时</td></tr>
+  <tr><td><code>ohos.permission.PRIVACY_WINDOW</code></td><td>在展示配置二维码或私钥时阻止系统截屏与录屏</td><td>仅在该页面显示期间</td></tr>
+</table>
+<p>除上述权限外，应用不申请任何其它权限。摄像头画面只在扫描界面内实时解析二维码，不保存、不上传。</p>
+
+<h2>三、数据共享与第三方</h2>
+<ul>
+  <li>本应用<strong>不内置任何服务器</strong>，也不提供订阅或中转服务。隧道流量直接发往你在配置文件里填写的服务器地址，那台服务器由你本人搭建和掌控，其隐私实践不适用本政策。</li>
+  <li>本应用<strong>未集成</strong>任何广告、统计、崩溃上报、推送或社交 SDK。依赖仅有系统能力与自行编译的 WireGuard 内核（随应用打包，不联网）。</li>
+  <li>我们不会出售、出租或以任何形式向第三方提供你的数据。</li>
+</ul>
+
+<h2>四、数据存储与删除</h2>
+<p>所有数据保存在设备的应用私有目录中，随应用卸载一并删除。应用内也提供：</p>
+<ul>
+  <li>“设置 → 本地日志”：清空启动与内核日志；</li>
+  <li>备份与恢复：删除已导入的隧道。</li>
+</ul>
+<p>如你曾导出过备份文件，该文件存放在你选择的位置，需由你自行删除。</p>
+
+<h2>五、未成年人保护</h2>
+<p>本应用不面向未成年人单独提供服务，也不收集任何年龄或身份信息。若未成年人使用本应用，应在监护人指导下进行。</p>
+
+<h2>六、政策变更</h2>
+<p>若应用功能变化导致数据处理方式改变，本政策会同步更新并在应用内与本页公示，重要变更会在应用更新说明中提示。</p>
+
+<h2>七、联系我们</h2>
+<p>对本政策有任何疑问，可通过以下方式联系：</p>
+<ul>
+  <li>邮箱：<strong>273156878@qq.com</strong></li>
+  <li>项目主页与问题反馈：<a href="https://github.com/simon2137/WGate">github.com/simon2137/WGate</a></li>
+</ul>
+
+<footer>
+  WGate 是独立开发的客户端，与 WireGuard 官方无隶属关系。“WireGuard” 是 Jason A. Donenfeld 的注册商标，本项目仅在描述协议兼容性时使用。
+</footer>
+
+</body>
+</html>
