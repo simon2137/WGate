@@ -250,7 +250,22 @@ AGC 会列出包内申请的权限，逐个填用途（必须中文）：
 5. 华为云初审（1–2 个工作日）→ 工信部短信核验（要当场点确认）→ 管局审核（通常 5–20 个工作日）；
 6. 通过后拿到形如「XICP备XXXXXXXX号-2A」的备案号，填回 AGC 的备案信息栏。国内规范还要求 **APP 内展示备案号**，上架前在"设置 → 关于"里加一行。
 
-> 备案是必要条件，不是充分条件：VPN 类目本身的资质审核是另一道门（见第 0 节）。不想等这 20 天，可以先只发布海外地区——海外分发不需要 APP 备案。
+> 备案是必要条件，不是充分条件：VPN 类目本身的资质审核是另一道门（见第 0 节）。
+
+**备案要填的 APP 特征信息（本项目的值，直接用）**
+
+| 字段 | 值 |
+|---|---|
+| APP 名称 | WGate |
+| 包名 | `com.wgate.app` |
+| 公钥（Base64，SPKI） | `BFonZBpw0jsN/xxNsthh5fn6VgSGuUviJZza7BlL8AtSNkFr7agh1psBZRSvecyl4jPLPcld1VV4e4rzfGSTt0guTdUwq7wdpaRzAcHM+AwNJIBwjJv8A3nOpDh8dcbwkQ==` |
+| 证书 MD5 | `7d0c4b46b7c1c0d23c6e4316e5c996a3` |
+| 证书 SHA256 | `C7:25:8D:B8:6B:72:2D:6F:DC:F0:08:93:EA:78:2A:15:32:DA:2B:16:5D:62:FA:37:C9:E3:1B:82:0A:83:89:43` |
+| 隐私政策 | <https://simon2137.github.io/WGate/privacy.html> |
+| 图标 | `signing/agc-assets/icon-216-fullbleed.png` |
+| 服务内容（如实、中性） | 网络连接工具：连接用户自行配置的私有网络服务器 |
+
+> 备案期间**冻结**包名、应用名称、签名证书：任何一项变了，备案信息与安装包对不上会被驳回重来。
 
 - **发布地区**：先只勾中国大陆（如果要加海外，海外不需要备案，但需要另填各国的合规信息）。
 
