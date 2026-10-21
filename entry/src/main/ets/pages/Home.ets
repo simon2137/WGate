@@ -586,12 +586,8 @@ struct Home {
         })
         .transition(TAB_TRANSITION)
       } else {
-        SupportView({
-          onNote: (message: string) => {
-            this.flash(message);
-          }
-        })
-        .transition(TAB_TRANSITION)
+        SupportView()
+          .transition(TAB_TRANSITION)
       }
 
       // The bar floats over the content so the immersive material has something

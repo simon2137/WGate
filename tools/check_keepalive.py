@@ -522,9 +522,12 @@ check('the icon is generated, not hand-edited',
 # 15. The support page, the privacy policy and the first-run defaults.
 #     The support tab used to be a mirror of the upstream project's screen: guide
 #     rows, a website, a chat room and a translation portal, all of them links
-#     out. It now carries only what this app owns, and the privacy policy is a
-#     page rather than a link so it keeps working offline. A fresh install opens
-#     on Simplified Chinese and follows the system appearance.
+#     out. It now carries what this app owns, plus the two ways out that belong
+#     to it — where the source is and how to write to the author — and nothing
+#     else: no website, no chat room, no translation portal. The addresses are
+#     named constants so a row cannot drift off to a dead link, and the privacy
+#     policy is a page rather than a link so it keeps working offline. A fresh
+#     install opens on Simplified Chinese and follows the system appearance.
 PRIVACY = ROOT / 'entry/src/main/ets/pages/Privacy.ets'
 privacy = PRIVACY.read_text(encoding='utf-8')
 pages = json.loads((ROOT / 'entry/src/main/resources/base/profile/main_pages.json')
@@ -533,8 +536,22 @@ display = (ROOT / 'entry/src/main/ets/pages/Display.ets').read_text(encoding='ut
 language = (ROOT / 'entry/src/main/ets/pages/Language.ets').read_text(encoding='utf-8')
 globals_text = (ROOT / 'entry/src/main/ets/pages/TunnelGlobals.ets').read_text(encoding='utf-8')
 store = (ROOT / 'entry/src/main/ets/service/SettingsStore.ets').read_text(encoding='utf-8')
-check('the support page links nowhere',
-      'https://' not in support and 'startAbility' not in support and 'this.open(' not in support)
+check('the support page links the source and the author, and nothing else',
+      "const SOURCE_URL: string = 'https://github.com/simon2137/WGate'" in support
+      and "const AUTHOR_MAIL: string = '273156878@qq.com'" in support
+      and support.count('https://') == 1
+      and "'mailto:' + AUTHOR_MAIL" in support
+      and 'this.open(SOURCE_URL, SOURCE_URL)' in support and 'this.mail()' in support)
+# A link only opens when both halves are there: the scheme has to be listed for
+# `canOpenLink` to answer at all, and the answer is what keeps a device without a
+# mail client from raising the system's own "nothing can open this" dialog.
+check('the support page asks before it opens, and copies when nothing can',
+      '"querySchemes"' in manifest and '"mailto"' in manifest and '"https"' in manifest
+      and "bundleManager.canOpenLink(link)" in support
+      and 'context.openLink(link)' in support
+      and 'this.offer(fallback)' in support
+      and 'pasteboard.MIMETYPE_TEXT_PLAIN' in support
+      and "Tr.t('The address is on the clipboard')" in support)
 check('the support page drops the upstream rows',
       all(f"Tr.t('{label}')" not in support for label in
           ['Getting started', 'Troubleshooting', 'Donate', 'Documentation', 'App website',

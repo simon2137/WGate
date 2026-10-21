@@ -39,6 +39,15 @@
       }
     ],
     "pages": "$profile:main_pages",
+    // The Support tab asks the system whether the source link and the author's
+    // address can be opened before it hands them over (bundleManager.canOpenLink
+    // answers 17700056 for a scheme this list does not carry), so a device with
+    // no mail client shows the address instead of an empty "nothing can open
+    // this" dialog.
+    "querySchemes": [
+      "https",
+      "mailto"
+    ],
     "abilities": [
       {
         "name": "EntryAbility",

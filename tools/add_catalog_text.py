@@ -27,6 +27,12 @@ SEP_COL = '\u0002'
 
 # english key -> {locale: translation}
 AUTHORED: dict[str, dict[str, str]] = {
+    # Support tab, the email row on a device with no mail client: the address is
+    # copied instead, and the toast has to say which of the two rows it came from.
+    'The address is on the clipboard': {
+        'zh_CN': '邮箱地址已复制',
+        'zh_TW': '電子郵件地址已複製',
+    },
     # Singular of the reference's `seconds` (秒). The reference only carries the
     # plural, so a bare `Second` would print "1 seconds" in English. The key is
     # the whole label rather than the word: `Second` is a prefix of `Seconds`,
@@ -309,6 +315,22 @@ AUTHORED: dict[str, dict[str, str]] = {
     'GPL-3.0 requires the corresponding source of this exact build to be available to anyone who has the binary. It is published with every release in the project repository, together with the revision and the build recipe used for this package. If you received the app without it, write to the address under the version row and it will be sent.': {
         'zh_CN': 'GPL-3.0 要求：任何拿到本程序的人都能获得与本次构建对应的完整源码。源码随每个版本发布在项目仓库中，并附上用于构建此安装包的版本号与构建方式。如果拿到应用时没有同时获得源码，可按下方的联系方式索取，我们会寄送。',
         'zh_TW': 'GPL-3.0 要求：任何拿到本程式的人都能取得與本次建置對應的完整原始碼。原始碼隨每個版本發佈在專案倉庫中，並附上用於建置此安裝包的版本號與建置方式。如果拿到應用程式時沒有同時取得原始碼，可按下方的聯絡方式索取，我們會寄送。',
+    },
+    # The Support tab (`view/SupportView.ets`). The licence list and the privacy
+    # policy are the two pages of legal text this build ships, so they share one
+    # section; no reference group label names that pair (its `Resources` group
+    # also holds the website and the donation page, which this build keeps out
+    # of the tab).
+    'Legal information': {
+        'zh_CN': '法律信息',
+        'zh_TW': '法律資訊',
+    },
+    # The contact section links the source of this build. The reference only
+    # words a link to its issue tracker ("Open an issue"), which is the wrong
+    # page to send a reader of the repository to.
+    'Project on GitHub': {
+        'zh_CN': '开源项目',
+        'zh_TW': '開源專案',
     },
 }
 
