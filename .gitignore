@@ -42,3 +42,10 @@ todo/
 /*.jpg
 /*.jpeg
 /*.png
+
+# release signing material (never commit)
+signing/
+*.p12
+*.cer
+*.csr
+*.p7b

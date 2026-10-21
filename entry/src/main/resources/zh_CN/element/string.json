@@ -1,0 +1,24 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "WGate 隧道模块"
+    },
+    {
+      "name": "ability_desc",
+      "value": "WGate 隧道管理"
+    },
+    {
+      "name": "vpn_extension_desc",
+      "value": "WGate 隧道服务"
+    },
+    {
+      "name": "permission_camera_reason",
+      "value": "扫描 WireGuard 配置二维码"
+    },
+    {
+      "name": "permission_location_reason",
+      "value": "读取当前 Wi-Fi 名称以触发自动隧道"
+    }
+  ]
+}
