@@ -34,7 +34,7 @@ WGate 是一个 **HarmonyOS（鸿蒙）上的 WireGuard 客户端**。它把你�
 | --- | --- |
 | ![自动隧道页（浅色）](docs/img/phone-light.jpg) | ![自动隧道页（深色）](docs/img/phone-dark.jpg) |
 
-**电脑上（PC 模式）**，同一套界面，系统托盘里常驻一个图标：
+**电脑上（PC 模式）**，同一套界面开在桌面窗口里；关掉窗口程序不退出，图标留在系统托盘：
 
 ![PC 模式](docs/img/pc.jpg)
 
