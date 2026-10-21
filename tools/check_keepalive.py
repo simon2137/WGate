@@ -542,16 +542,18 @@ check('the support page links the source and the author, and nothing else',
       and support.count('https://') == 1
       and "'mailto:' + AUTHOR_MAIL" in support
       and 'this.open(SOURCE_URL, SOURCE_URL)' in support and 'this.mail()' in support)
-# A link only opens when both halves are there: the scheme has to be listed for
-# `canOpenLink` to answer at all, and the answer is what keeps a device without a
-# mail client from raising the system's own "nothing can open this" dialog.
-check('the support page asks before it opens, and copies when nothing can',
-      '"querySchemes"' in manifest and '"mailto"' in manifest and '"https"' in manifest
-      and "bundleManager.canOpenLink(link)" in support
-      and 'context.openLink(link)' in support
+# A `mailto:` has to reach the mail client through `openLink`, not through a
+# generic implicit want: a browser answers arbitrary URIs and turns the address
+# into a web search. `canOpenLink` is deliberately not the gate — it answers
+# from the link declarations an app publishes, and a phone with a working mail
+# client reported "nothing can open this" because that client publishes none.
+check('the support page opens links and copies when nothing can',
+      'context.openLink(link)' in support
+      and 'bundleManager.canOpenLink(' not in support
       and 'this.offer(fallback)' in support
       and 'pasteboard.MIMETYPE_TEXT_PLAIN' in support
-      and "Tr.t('The address is on the clipboard')" in support)
+      and "Tr.t('The address is on the clipboard')" in support
+      and '"querySchemes"' not in manifest)
 check('the support page drops the upstream rows',
       all(f"Tr.t('{label}')" not in support for label in
           ['Getting started', 'Troubleshooting', 'Donate', 'Documentation', 'App website',

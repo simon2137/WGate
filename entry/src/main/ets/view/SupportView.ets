@@ -1,6 +1,6 @@
 import { promptAction, router } from '@kit.ArkUI';
 import pasteboard from '@ohos.pasteboard';
-import { bundleManager, common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { Palette, Type, ROW_PAD_H, BAR_SPACE, FONT } from '../theme/Theme';
@@ -33,20 +33,18 @@ export struct SupportView {
   @StorageProp('theme_tick') themeTick: number = 0;
 
   /**
-   * `openLink` asks the system which app registers for the link's scheme, which
-   * is the difference between handing the address to a mail client and handing
-   * a `mailto:` string to whatever takes arbitrary URIs (a browser turns it into
-   * a web search). Asking `canOpenLink` first keeps a device with no mail client
-   * from raising the system's own "nothing can open this" dialog: the address
-   * goes to the clipboard with a toast, which is what the user needs to act on
-   * it from a webmail or a second device.
+   * `openLink` is what actually hands a scheme to its owner: the system resolves
+   * `https` to the browser and `mailto` to the mail client, and a `mailto:` that
+   * is pushed through a generic implicit want instead gets swallowed by whatever
+   * takes arbitrary URIs (a browser turns it into a web search).
+   *
+   * It is deliberately not gated on `canOpenLink`: that API answers from the
+   * link declarations an app publishes, and a mail client that opens `mailto`
+   * without publishing one made the check say "nothing here" on a phone that
+   * had one. The rejection is the honest signal — when it comes, the address is
+   * copied so the tap still leaves the user something to use.
    */
   private open(link: string, fallback: string): void {
-    if (!this.canOpen(link)) {
-      hilog.warn(DOMAIN, TAG, 'no handler for %{public}s', link);
-      this.offer(fallback);
-      return;
-    }
     try {
       const context = getContext(this) as common.UIAbilityContext;
       context.openLink(link).catch((error: BusinessError) => {
@@ -62,7 +60,7 @@ export struct SupportView {
   }
 
   /**
-   * Nothing on the device can open the link, so the text itself becomes the
+   * Nothing on the device could take the link, so the text itself becomes the
    * answer: copy it, then say so. A platform toast rather than the home page's
    * flash, because this one has to be readable while the tap is still fresh.
    */
@@ -74,19 +72,6 @@ export struct SupportView {
       hilog.warn(DOMAIN, TAG, 'clipboard rejected: %{public}s', String(error.code));
       promptAction.showToast({ message: text, duration: 2600 });
     });
-  }
-
-  /**
-   * `canOpenLink` throws 17700055 for a malformed link and 17700056 when the
-   * scheme is not listed under `querySchemes` in module.json5; both mean the
-   * same thing to the caller.
-   */
-  private canOpen(link: string): boolean {
-    try {
-      return bundleManager.canOpenLink(link);
-    } catch (error) {
-      return false;
-    }
   }
 
   private mail(): void {
