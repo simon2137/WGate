@@ -1,0 +1,7 @@
+{
+  "modelVersion": "6.1.1",
+  "name": "wg-tunnel",
+  "version": "1.0.0",
+  "description": "WG Tunnel - WireGuard / AmneziaWG VPN client for HarmonyOS",
+  "dependencies": {}
+}

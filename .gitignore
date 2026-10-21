@@ -1,0 +1,44 @@
+# build artefacts
+build/
+entry/build/
+entry/.cxx/
+.hvigor/
+.cxx/
+oh_modules/
+entry/oh_modules/
+.ohpm/
+*.hap
+*.har
+*.app
+
+# host test binaries
+tools/__pycache__/
+*.exe
+*.obj
+*.pdb
+
+# reference checkouts fetched while porting (see README)
+_ref_android/
+_ref_arkts/
+_ref_wg/
+_ref_vpn_napi.cpp
+
+# editor / OS noise
+.idea/
+.DS_Store
+Thumbs.db
+
+# local scratch from the development session
+.cache/
+.dsh-*
+.removed_pages/
+context/
+dist/
+sub_agents/
+todo/
+*.b64
+
+# loose screenshots at the repository root; kept copies live in docs/img/
+/*.jpg
+/*.jpeg
+/*.png

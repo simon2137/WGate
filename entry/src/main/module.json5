@@ -1,0 +1,96 @@
+{
+  "module": {
+    "name": "entry",
+    "type": "entry",
+    "description": "$string:module_desc",
+    "mainElement": "EntryAbility",
+    "deviceTypes": [
+      "phone",
+      "tablet",
+      "2in1"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET"
+      },
+      {
+        "name": "ohos.permission.GET_NETWORK_INFO"
+      },
+      {
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING"
+      },
+      {
+        "name": "ohos.permission.GET_WIFI_INFO"
+      },
+      {
+        "name": "ohos.permission.PRIVACY_WINDOW"
+      },
+      {
+        "name": "ohos.permission.CAMERA",
+        "reason": "$string:permission_camera_reason",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "inuse"
+        }
+      }
+    ],
+    "pages": "$profile:main_pages",
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        "srcEntry": "./ets/entryability/EntryAbility.ets",
+        "description": "$string:ability_desc",
+        "icon": "$media:app_icon",
+        "label": "$string:app_name",
+        "startWindowIcon": "$media:app_icon",
+        "startWindowBackground": "$color:start_window_background",
+        "exported": true,
+        "launchType": "singleton",
+        "orientation": "auto_rotation",
+        "supportWindowMode": [
+          "fullscreen",
+          "split",
+          "floating"
+        ],
+        "minWindowWidth": 360,
+        "minWindowHeight": 480,
+        "skills": [
+          {
+            "entities": [
+              "entity.system.home"
+            ],
+            "actions": [
+              "ohos.want.action.home"
+            ]
+          },
+          {
+            "actions": [
+              "com.wgate.app.action.TOGGLE_TUNNEL"
+            ]
+          }
+        ]
+      }
+    ],
+    "extensionAbilities": [
+      {
+        "name": "WgVpnExtAbility",
+        "srcEntry": "./ets/vpnext/WgVpnExtAbility.ets",
+        // No "process" tag here on purpose: module.json5 only accepts it for
+        // type embeddedUI, and the platform already runs every ExtensionAbility
+        // of one type in its own process (进程模型: "所有同一类型
+        // ExtensionAbility 均是运行在一个独立进程中"), so the VPN extension does
+        // not share the UI's lifecycle as long as it stays started.
+        "description": "$string:vpn_extension_desc",
+        "type": "vpn",
+        "permissions": [
+          "ohos.permission.INTERNET"
+        ],
+        "exported": true
+      }
+    ]
+  }
+}

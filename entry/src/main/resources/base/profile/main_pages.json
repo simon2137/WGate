@@ -1,0 +1,28 @@
+{
+  "src": [
+    "pages/Home",
+    "pages/TunnelSettings",
+    "pages/TunnelConfig",
+    "pages/Appearance",
+    "pages/Notifications",
+    "pages/TunnelGlobals",
+    "pages/DnsSettings",
+    "pages/Logs",
+    "pages/Security",
+    "pages/TunnelRecovery",
+    "pages/Backup",
+    "pages/Display",
+    "pages/Language",
+    "pages/Monitoring",
+    "pages/PreferredTunnel",
+    "pages/WifiSettings",
+    "pages/PinLock",
+    "pages/ConfigEdit",
+    "pages/Donate",
+    "pages/Addresses",
+    "pages/License",
+    "pages/Privacy",
+    "pages/Index",
+    "pages/Scan"
+  ]
+}

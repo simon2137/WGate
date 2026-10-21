@@ -1,0 +1,36 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#0E1621"
+    },
+    {
+      "name": "brand",
+      "value": "#38E8A0"
+    },
+    {
+      "name": "brand_dark",
+      "value": "#101826"
+    },
+    {
+      "name": "text_primary",
+      "value": "#EAF2FB"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#8FA3B8"
+    },
+    {
+      "name": "surface",
+      "value": "#16212F"
+    },
+    {
+      "name": "surface_high",
+      "value": "#1E2C3D"
+    },
+    {
+      "name": "danger",
+      "value": "#FF6B6B"
+    }
+  ]
+}

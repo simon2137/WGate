@@ -1,0 +1,24 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "WGate VPN module"
+    },
+    {
+      "name": "ability_desc",
+      "value": "WGate"
+    },
+    {
+      "name": "vpn_extension_desc",
+      "value": "WGate tunnel service"
+    },
+    {
+      "name": "permission_camera_reason",
+      "value": "Scan WireGuard configuration QR codes"
+    },
+    {
+      "name": "permission_location_reason",
+      "value": "Read the current Wi-Fi name to trigger automatic tunnels"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "libwgcore.so",
+  "types": "./Index.d.ts",
+  "version": "1.0.0",
+  "description": "WireGuard native core for HarmonyOS"
+}

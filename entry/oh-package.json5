@@ -1,0 +1,9 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "WG Tunnel entry module",
+  "main": "",
+  "dependencies": {
+    "libwgcore.so": "file:./src/main/cpp/types/libwgcore"
+  }
+}
