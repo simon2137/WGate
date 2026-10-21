@@ -172,6 +172,7 @@ export struct AutoTunnelView {
             title: Tr.t('Tunnel on Wi-Fi'),
             description: `${Tr.t('Preferred tunnel')}: ${this.preferredName('wifi')}`,
             icon: $r('app.media.ic_wifi'),
+            chevron: true,
             hasSwitch: true,
             switchOn: this.onWifi,
             onSwitch: (on: boolean) => {
@@ -193,6 +194,7 @@ export struct AutoTunnelView {
             title: Tr.t('Tunnel on mobile data'),
             description: `${Tr.t('Preferred tunnel')}: ${this.preferredName('cellular')}`,
             icon: $r('app.media.ic_signal_cellular'),
+            chevron: true,
             hasSwitch: true,
             switchOn: this.onCellular,
             onSwitch: (on: boolean) => {
@@ -214,6 +216,7 @@ export struct AutoTunnelView {
             title: Tr.t('Tunnel on Ethernet'),
             description: `${Tr.t('Preferred tunnel')}: ${this.preferredName('ethernet')}`,
             icon: $r('app.media.ic_settings_ethernet'),
+            chevron: true,
             hasSwitch: true,
             switchOn: this.onEthernet,
             onSwitch: (on: boolean) => {

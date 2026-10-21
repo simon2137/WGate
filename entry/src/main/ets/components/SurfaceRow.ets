@@ -69,6 +69,17 @@ export struct SurfaceRow {
             .fontColor(Palette.MUTED)
             .margin({ right: 8 })
         }
+        // A row that both toggles and opens a page needs two signals, or the
+        // switch reads as the only thing there and the page behind the row is
+        // never found: the chevron sits before the switch.
+        if (this.hasSwitch && this.chevron) {
+          Image($r('app.media.ic_chevron_down'))
+            .width(20)
+            .height(20)
+            .fillColor(Palette.MUTED)
+            .rotate({ angle: 270 })
+            .margin({ right: 10 })
+        }
         if (this.hasSwitch) {
           Toggle({ type: ToggleType.Switch, isOn: this.switchOn })
             .selectedColor(Palette.PRIMARY)

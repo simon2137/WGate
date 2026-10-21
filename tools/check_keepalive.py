@@ -611,6 +611,17 @@ check('the notices file is generated, not hand-written',
       (ROOT / 'tools/make_notices.py').exists()
       and 'SHOULD NOT BE EDITED' not in notices)
 
+# 16. A row whose body opens another page has to look like it does. Beside a
+#     switch the chevron is the only thing saying so: the auto-tunnel network
+#     rows both toggle and open a page, and with the switch alone the page was
+#     never found. `tools/check_row_affordance.py` scans every row in the app for
+#     the same shape.
+auto = (ROOT / 'entry/src/main/ets/view/AutoTunnelView.ets').read_text(encoding='utf-8')
+row = (ROOT / 'entry/src/main/ets/components/SurfaceRow.ets').read_text(encoding='utf-8')
+check('a switch row that opens a page still shows a chevron',
+      'this.hasSwitch && this.chevron' in row
+      and auto.count('chevron: true') == 3)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:
