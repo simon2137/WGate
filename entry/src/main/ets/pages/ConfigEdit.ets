@@ -70,7 +70,6 @@ struct ConfigEdit {
   @State listenPort: string = '';
   @State dns: string = '';
   @State mtu: string = '';
-  @State excludedApps: string = '';
   @State preUp: string = '';
   @State postUp: string = '';
   @State preDown: string = '';
@@ -116,7 +115,6 @@ struct ConfigEdit {
     this.listenPort = t.listenPort > 0 ? t.listenPort.toString() : '';
     this.dns = t.dns;
     this.mtu = t.mtu > 0 ? t.mtu.toString() : '';
-    this.excludedApps = t.excludedApps;
     this.preUp = t.preUp;
     this.postUp = t.postUp;
     this.preDown = t.preDown;
@@ -213,7 +211,6 @@ struct ConfigEdit {
     t.listenPort = ConfigEdit.number(this.listenPort, 0);
     t.dns = this.dns.trim();
     t.mtu = ConfigEdit.number(this.mtu, 1420);
-    t.excludedApps = this.excludedApps.trim();
     t.preUp = this.preUp;
     t.postUp = this.postUp;
     t.preDown = this.preDown;
@@ -415,14 +412,6 @@ struct ConfigEdit {
               field(Tr.t('MTU'), this.mtu, 'auto', false, (v: string) => {
                 this.mtu = v;
               }, '', () => {})
-              // Apps listed here bypass the tunnel; everything else goes through
-              // it. The engine passes the list as `blockedApplications`, so the
-              // bundle names have to be typed: HarmonyOS does not let an ordinary
-              // app enumerate the other installed applications.
-              field(Tr.t('Excluded apps'), this.excludedApps,
-                Tr.t('Excluded apps (bundle names, comma separated)'), false, (v: string) => {
-                  this.excludedApps = v;
-                }, '', () => {})
 
               Row() {
                 Text(this.showAmnezia ? 'Hide Amnezia options' : 'Show Amnezia options')

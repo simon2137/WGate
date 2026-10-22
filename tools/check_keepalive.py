@@ -622,21 +622,6 @@ check('a switch row that opens a page still shows a chevron',
       'this.hasSwitch && this.chevron' in row
       and auto.count('chevron: true') == 3)
 
-# 17. Split tunnelling. The engine has always forwarded `ExcludedApps` to the
-#     platform as `blockedApplications` (the apps in the list bypass the tunnel,
-#     everything else is proxied), but no reachable screen could set it: the only
-#     field lived on `pages/Index`, which nothing routes to. The list is typed
-#     rather than picked because on HarmonyOS an ordinary app cannot enumerate
-#     the other installed applications.
-edit = (ROOT / 'entry/src/main/ets/pages/ConfigEdit.ets').read_text(encoding='utf-8')
-vpn = (ROOT / 'entry/src/main/ets/vpnext/WgVpnExtAbility.ets').read_text(encoding='utf-8')
-check('the config editor can set the apps that bypass the tunnel',
-      "@State excludedApps: string = ''" in edit
-      and 'this.excludedApps = t.excludedApps;' in edit
-      and 't.excludedApps = this.excludedApps.trim();' in edit
-      and "Tr.t('Excluded apps')" in edit
-      and 'vpnConfig.blockedApplications = excluded' in vpn)
-
 if failures:
     print('keep-alive audit:')
     for item in failures:
