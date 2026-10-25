@@ -65,4 +65,4 @@
 
 ---
 
-*WGate 是独立开发的客户端，与 WireGuard 官方无隶属关系。"WireGuard" 是 Jason A. Donenfeld 的注册商标，本项目仅在描述协议兼容性时使用。*
+*WGate 是独立开发的客户端，与 WireGuard 官方无隶属关系；与上游开源项目 **WG Tunnel**（作者 Zane Schepke）同样没有任何隶属、赞助或背书关系——本项目只在其 MIT 许可下复用了该项目的界面与交互设计，并保留原始版权声明。"WireGuard" 是 Jason A. Donenfeld 的注册商标，本项目仅在描述协议兼容性时使用。*
