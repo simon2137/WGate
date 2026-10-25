@@ -638,6 +638,19 @@ check('the transfer counters in the shade move in steps',
       'private static step(bytes: number): number' in notice
       and 'formatBytes(TunnelNotice.step(rxBytes))' in notice)
 
+# 19. The privacy policy exists twice — `docs/PRIVACY.md` for the repository and
+#     `docs/privacy.html` for the URL the store listing points at — and the two
+#     drifted: the web copy went on advertising a per-app rule list months after
+#     the feature was dropped from the app. Whatever the policy claims has to be
+#     true of both copies, and neither may claim a per-app proxy: the app has no
+#     such screen, only an `ExcludedApps` line it reads out of a wg-quick file.
+policy_md = (ROOT / 'docs/PRIVACY.md').read_text(encoding='utf-8')
+policy_html = (ROOT / 'docs/privacy.html').read_text(encoding='utf-8')
+check('neither copy of the privacy policy claims a per-app proxy',
+      '分应用' not in policy_md and '分应用' not in policy_html)
+check('both copies of the privacy policy disclaim the upstream app',
+      'WG Tunnel' in policy_md and 'WG Tunnel' in policy_html)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:
