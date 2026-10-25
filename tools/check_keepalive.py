@@ -650,20 +650,6 @@ check('neither copy of the privacy policy claims a per-app proxy',
       '分应用' not in policy_md and '分应用' not in policy_html)
 check('both copies of the privacy policy disclaim the upstream app',
       'WG Tunnel' in policy_md and 'WG Tunnel' in policy_html)
-# 20. The store policy is written to AppGallery's own ten-section template, and a
-#     reviewer who reads Chinese must not be the only one who can. The page is one
-#     file with three `<section class="lang">` blocks and a switcher; a language that
-#     loses its section silently ships a policy nobody can read, so all three are
-#     checked here, together with the sections the template requires.
-for section_id in ('id="zh"', 'id="zh-Hant"', 'id="en"'):
-    check(f'the published policy has a {section_id.split(chr(34))[1]} section',
-          section_id in policy_html)
-check('the published policy offers the three languages in the switcher',
-      policy_html.count('data-lang=') >= 3 and '?lang=' in policy_html)
-check('the published policy follows the AppGallery section template',
-      all(f'<h2>{n}、' in policy_html for n in
-          ('一', '二', '三', '四', '五', '六', '七', '八', '九', '十'))
-      and all(f'<h2>{n}. ' in policy_html for n in range(1, 11)))
 
 if failures:
     print('keep-alive audit:')

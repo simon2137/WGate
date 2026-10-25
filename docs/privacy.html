@@ -1,498 +1,96 @@
 <!DOCTYPE html>
-<html lang="zh-CN" id="root">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WGate 隐私政策 · WGate Privacy Policy</title>
+<title>WGate 隐私政策</title>
 <style>
   :root { color-scheme: light dark; }
-  html, body { box-sizing: border-box; max-width: 100%; }
   body {
     margin: 0 auto; max-width: 46rem; padding: 2.5rem 1.25rem 4rem;
     font: 16px/1.75 -apple-system, "HarmonyOS Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
     color: #1b1f23; background: #fff;
   }
+  @media (prefers-color-scheme: dark) {
+    body { color: #e6e8ea; background: #16181a; }
+    th { background: #22262a; }
+    td, th { border-color: #33383d; }
+    h1, h2 { color: #fff; }
+  }
   h1 { font-size: 1.75rem; margin: 0 0 .5rem; letter-spacing: -.01em; }
   h2 { font-size: 1.15rem; margin: 2.5rem 0 .75rem; padding-bottom: .4rem; border-bottom: 1px solid #e3e6e8; }
-  h3 { font-size: 1rem; margin: 1.5rem 0 .4rem; }
   .meta { color: #6a737c; font-size: .9rem; margin-bottom: 2rem; }
   .meta code { background: #f2f4f6; padding: .1em .4em; border-radius: 4px; }
-  table { width: 100%; max-width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .92rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .92rem; }
   th, td { border: 1px solid #e3e6e8; padding: .55rem .7rem; text-align: left; vertical-align: top; }
   th { background: #f6f8f9; font-weight: 600; }
-  /* Fixed layout keeps the four columns inside the viewport: `ohos.permission.…`
-     is one unbreakable word and would otherwise push the table (and the page)
-     wider than a phone screen. */
-  table.perm { table-layout: fixed; }
-  table.perm td:nth-child(1) { width: 27%; }
-  table.perm td:nth-child(2) { width: 31%; }
-  table.perm td:nth-child(3) { width: 18%; }
-  table.perm td:nth-child(4) { width: 24%; }
-  td code, th code { word-break: break-all; }
-  td { overflow-wrap: anywhere; }
-  @media (max-width: 480px) {
-    body { padding: 1.5rem 1rem 3rem; }
-    table { font-size: .86rem; }
-    th, td { padding: .45rem .5rem; }
-  }
   strong { font-weight: 600; }
   footer { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid #e3e6e8; color: #6a737c; font-size: .85rem; }
   a { color: #0a6c8a; }
-  .langs { display: flex; gap: .5rem; flex-wrap: wrap; margin: 0 0 1.5rem; padding: 0; list-style: none; }
-  .langs a {
-    display: inline-block; padding: .3rem .7rem; border-radius: 999px;
-    border: 1px solid #d7dbdf; text-decoration: none; font-size: .85rem; color: #3d444b;
-  }
-  .langs a[aria-current="true"] { background: #1b1f23; color: #fff; border-color: #1b1f23; }
-  .lang { display: none; }
-  .lang.on { display: block; }
-  /* Dark mode last: a media query earns no specificity, so these rules have to
-     come after the light ones they override. */
-  @media (prefers-color-scheme: dark) {
-    body { color: #e6e8ea; background: #16181a; }
-    h1, h2 { color: #fff; }
-    h2 { border-bottom-color: #33383d; }
-    th { background: #22262a; color: #e6e8ea; }
-    td, th { border-color: #33383d; }
-    .meta, footer { color: #9aa4ae; }
-    .meta code { background: #23282d; color: #cfd6dc; }
-    a { color: #6cc4e0; }
-    footer { border-top-color: #33383d; }
-    .langs a { border-color: #3a4148; color: #c3c9cf; }
-    .langs a[aria-current="true"] { background: #e6e8ea; color: #16181a; border-color: #e6e8ea; }
-  }
 </style>
 </head>
 <body>
 
-<nav class="langs" aria-label="Language">
-  <a href="?lang=zh" data-lang="zh">中文</a>
-  <a href="?lang=zh-Hant" data-lang="zh-Hant">繁體中文</a>
-  <a href="?lang=en" data-lang="en">English</a>
-</nav>
-
-<!-- ============================ 简体中文 ============================ -->
-<section class="lang" id="zh" lang="zh-CN">
-
 <h1>WGate 隐私政策</h1>
 <p class="meta">
-  <strong>生效日期</strong>：2026 年 10 月 25 日<br>
-  <strong>适用应用</strong>：WGate（HarmonyOS 版，包名 <code>com.wgate.app</code>）<br>
-  <strong>版本</strong>：1.0.0
+  <strong>生效日期</strong>：2026 年 10 月 21 日<br>
+  <strong>适用应用</strong>：WGate（HarmonyOS 版，包名 <code>com.wgate.app</code>）
 </p>
 
-<p>本政策依照华为应用市场的标准隐私声明框架编写，并按 WGate 的实际功能逐条填写。WGate 的开发者（下称“我们”）明白个人信息对你的重要性。这一页要回答的问题很简单：你在使用 WGate 时，我们会不会知道你是谁、你连了哪里。</p>
-
-<p><strong>一句话结论</strong>：WGate 不设账号、不收集个人信息、不上报任何数据。它只做一件事——把你设备上的流量加密后，送到<strong>你自己填写的那台服务器</strong>。</p>
-
-<h2>一、我们如何收集和使用个人信息</h2>
-<p>我们不收集、不存储、不上传你的个人信息。</p>
-<ul>
-  <li>没有账号体系：不需要手机号、邮箱、姓名或任何身份信息，也没有注册与登录入口。</li>
-  <li>没有统计与埋点：不采集使用行为、设备标识符、崩溃日志或安装来源。</li>
-  <li>没有广告：不接入广告 SDK，不做定向投放，不推送营销信息。</li>
-</ul>
-
-<h3>1.1 注册与登录</h3>
-<p>不适用。WGate 没有账号，也不提供登录，因此不存在与账号关联的个人信息。</p>
-
-<h3>1.2 个性化推荐</h3>
-<p>不适用。本应用不含内容推荐功能，不会基于任何信息向你推荐内容或服务。</p>
-
-<h3>1.3 广告与营销推广</h3>
-<p>不适用。本应用不展示广告，不发送营销推送，也不向第三方提供任何用于营销的信息。</p>
-
-<h3>1.4 在你设备上产生并保存的内容</h3>
-<p>为了让你能用起来，WGate 会在<strong>你设备上的应用私有目录</strong>保存下列内容。它们不会离开这台设备，除非你本人主动导出或展示：</p>
+<h2>一、我们收集哪些信息</h2>
+<p><strong>不收集。</strong> WGate 没有账号体系，不要求你注册或登录，也不会上报使用行为、设备标识、崩溃日志或统计数据。</p>
+<p>应用运行过程中产生的以下内容，全部只保存在你自己的设备上：</p>
 <table>
   <tr><th>内容</th><th>存放位置</th><th>是否会离开设备</th></tr>
-  <tr><td>隧道配置（含私钥、对端公钥、地址、AllowedIPs 等）</td><td>应用私有配置存储</td><td>否。只有你主动执行“导出备份”或“显示二维码”时，才以你可见的形式输出</td></tr>
-  <tr><td>应用设置（主题、语言、自动隧道规则、DNS 等）</td><td>应用私有配置存储</td><td>否</td></tr>
-  <tr><td>启动与内核事件日志</td><td>应用私有文件目录</td><td>否。你可以随时查看、清空或导出</td></tr>
-  <tr><td>连接期间的收发字节数、握手时间</td><td>仅内存中统计</td><td>否</td></tr>
+  <tr><td>隧道配置（含私钥、对端公钥、地址、AllowedIPs 等）</td><td>应用私有配置存储</td><td>否。只有你主动执行“导出备份”或“显示二维码”时，才会以你可见的形式输出</td></tr>
+  <tr><td>应用设置（主题、语言、自动隧道规则等）</td><td>应用私有配置存储</td><td>否</td></tr>
+  <tr><td>启动与内核事件日志</td><td>应用私有文件目录</td><td>否。你可以随时在“设置 → 本地日志”里查看、清空或导出</td></tr>
+  <tr><td>连接期间的收发流量字节数、握手时间</td><td>仅内存中统计</td><td>否</td></tr>
 </table>
 
-<h2>二、设备权限调用</h2>
-<p>应用只申请完成功能所必需的 6 项权限，均为普通级别，且只在你使用对应功能时触发：</p>
-<table class="perm">
-  <tr><th>权限</th><th>用途</th><th>触发时机</th><th>拒绝的后果</th></tr>
-  <tr><td><code>ohos.permission.INTERNET</code></td><td>建立加密隧道，与你配置的服务器通信</td><td>隧道连接期间</td><td>隧道无法工作，核心功能不可用</td></tr>
-  <tr><td><code>ohos.permission.GET_NETWORK_INFO</code></td><td>识别当前网络类型（Wi-Fi / 移动数据 / 以太网），用于自动隧道与断线重连</td><td>网络状态变化时</td><td>自动隧道与重连失效，手动连接仍可用</td></tr>
-  <tr><td><code>ohos.permission.GET_WIFI_INFO</code></td><td>读取当前 Wi-Fi 名称，用于“连上某个 Wi-Fi 就启动某条隧道”的规则</td><td>网络切换时</td><td>Wi-Fi 规则失效，其余功能正常</td></tr>
-  <tr><td><code>ohos.permission.KEEP_BACKGROUND_RUNNING</code></td><td>切到后台后保持隧道连接，并在通知栏显示当前隧道与流量</td><td>应用在后台时</td><td>切后台可能被系统断开</td></tr>
-  <tr><td><code>ohos.permission.CAMERA</code></td><td>扫描 WireGuard 配置二维码</td><td>仅当你点击“扫描二维码”时</td><td>可改用“粘贴”导入配置</td></tr>
-  <tr><td><code>ohos.permission.PRIVACY_WINDOW</code></td><td>展示私钥或二维码时阻止系统截屏与录屏</td><td>该页面显示期间</td><td>可正常使用，仅少了这层防护</td></tr>
-</table>
-<p>你可以随时在“系统设置 → 应用 → WGate → 权限”中撤回，也可以在应用内关闭通知、自动隧道等开关；撤回即时生效，不影响其他功能。摄像头画面只在扫描界面内实时解析，不保存、不上传。</p>
-
-<h2>三、对未成年人的保护</h2>
-<p>本应用不面向未成年人单独提供服务，也不收集年龄或身份信息。未成年人应在监护人指导下使用本应用。监护人如发现未成年人未经同意使用，可随时卸载——卸载会一并删除本机上的全部配置、设置与日志。</p>
-
-<h2>四、与第三方共享、转让、公开披露</h2>
-<p>我们不出售、不出租、不以任何形式向第三方提供你的信息，因为我们手上没有这些信息。</p>
-<ul>
-  <li><strong>不共享</strong>：应用不运营自有服务器，不设中转节点，不存在把数据交给第三方的环节。</li>
-  <li><strong>不转让</strong>：若发生合并、收购或破产清算，本应用不持有可转让的个人信息。</li>
-  <li><strong>不公开披露</strong>：除法律法规强制要求外，我们不会披露任何内容；由于不保有数据，也无从披露。</li>
-</ul>
-<p>你的隧道流量直接发往你在配置里填写的那台服务器。那台服务器由你本人搭建和掌控，其日志与隐私实践由该服务器的运营者决定，不属于本政策范围。</p>
-
-<h2>五、第三方 SDK 与服务商</h2>
-<p>本应用<strong>未集成任何第三方 SDK</strong>：没有广告、统计、崩溃上报、推送、社交或支付 SDK。</p>
-<p>为实现协议与界面，应用内打包了下列开源组件。它们随应用一起运行，不联网、不采集信息、不向任何服务器回传数据：</p>
+<h2>二、应用申请的权限及用途</h2>
 <table>
-  <tr><th>组件</th><th>用途</th><th>许可</th><th>是否收集信息</th></tr>
-  <tr><td>WireGuard 协议与隧道内核（本项目自行编译）</td><td>加密与传输</td><td>GPL-2.0</td><td>否</td></tr>
-  <tr><td>Monocypher</td><td>X25519 密钥交换、ChaCha20-Poly1305</td><td>CC0-1.0 / BSD-2-Clause</td><td>否</td></tr>
-  <tr><td>BLAKE2s 参考实现</td><td>哈希</td><td>CC0-1.0</td><td>否</td></tr>
-  <tr><td>Inter 字体</td><td>界面文字</td><td>SIL OFL 1.1</td><td>否</td></tr>
-  <tr><td>Material Symbols</td><td>界面图标</td><td>Apache-2.0</td><td>否</td></tr>
-  <tr><td>HarmonyOS SDK / ArkUI</td><td>系统能力</td><td>华为 SDK 许可</td><td>系统能力，行为由系统决定</td></tr>
+  <tr><th>权限</th><th>用途</th><th>何时使用</th></tr>
+  <tr><td><code>ohos.permission.INTERNET</code></td><td>建立加密隧道，与你配置的服务器通信</td><td>隧道连接期间</td></tr>
+  <tr><td><code>ohos.permission.GET_NETWORK_INFO</code></td><td>识别当前网络类型（Wi-Fi / 移动数据 / 以太网），用于自动隧道与断线重连</td><td>网络状态变化时</td></tr>
+  <tr><td><code>ohos.permission.GET_WIFI_INFO</code></td><td>读取当前 Wi-Fi 名称，用于匹配“连上哪个 Wi-Fi 就启动哪条隧道”的规则</td><td>网络切换时</td></tr>
+  <tr><td><code>ohos.permission.KEEP_BACKGROUND_RUNNING</code></td><td>应用切到后台时保持隧道连接，并在通知栏显示当前隧道与流量</td><td>应用在后台时</td></tr>
+  <tr><td><code>ohos.permission.CAMERA</code></td><td>扫描 WireGuard 配置二维码</td><td>仅在你点击“扫描二维码”时</td></tr>
+  <tr><td><code>ohos.permission.PRIVACY_WINDOW</code></td><td>在展示配置二维码或私钥时阻止系统截屏与录屏</td><td>仅在该页面显示期间</td></tr>
 </table>
+<p>除上述权限外，应用不申请任何其它权限。摄像头画面只在扫描界面内实时解析二维码，不保存、不上传。</p>
 
-<h2>六、管理你的个人信息</h2>
-
-<h3>6.1 查阅与更正</h3>
-<p>本机保存的内容都在应用内可见、可改：隧道配置在隧道详情页，设置在“设置”，日志在“设置 → 本地日志”。</p>
-
-<h3>6.2 删除</h3>
-<p>你可以删除单条隧道、清空“本地日志”，或在系统里卸载应用。卸载会一并删除全部配置、设置与日志，不在任何地方保留副本。</p>
-
-<h3>6.3 注销账号</h3>
-<p>不适用。本应用没有账号体系，无需注销。</p>
-
-<h3>6.4 撤回同意</h3>
-<p>在系统设置中关闭单项权限，或在应用内关闭通知、状态通知、自动隧道等开关；撤回即时生效。</p>
-
-<h3>6.5 个性化推荐开关</h3>
-<p>不适用。本应用没有推荐功能，也没有相应开关。</p>
-
-<h3>6.6 停止运营</h3>
-<p>若本项目停止维护，我们会在项目主页提前公告，并在公告期内保留源码与导出方式，确保你能把配置带走。本应用不含任何云端数据，停止运营不会有数据损失。</p>
-
-<h2>七、我们如何保护你的个人信息</h2>
-
-<h3>7.1 保存地点与期限</h3>
-<p>全部内容只保存在你设备上的应用私有目录，不存放在我们的任何服务器上，不涉及跨境传输。保存期限由你决定：直到你删除或卸载应用。</p>
-
-<h3>7.2 安全措施</h3>
+<h2>三、数据共享与第三方</h2>
 <ul>
-  <li>私钥只在本机生成与使用，不离开设备；</li>
-  <li>展示私钥或二维码时申请 <code>PRIVACY_WINDOW</code>，阻止系统截屏与录屏；</li>
-  <li>备份导出与二维码展示都由你主动发起，应用不会自动外发；</li>
-  <li>不设后门、不设遥测；源码以 GPL-3.0 公开，可自行审计；</li>
-  <li>传输使用 Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s，并兼容 AmneziaWG 的混淆参数。</li>
+  <li>本应用<strong>不内置任何服务器</strong>，也不提供订阅或中转服务。隧道流量直接发往你在配置文件里填写的服务器地址，那台服务器由你本人搭建和掌控，其隐私实践不适用本政策。</li>
+  <li>本应用<strong>未集成</strong>任何广告、统计、崩溃上报、推送或社交 SDK。依赖仅有系统能力与自行编译的 WireGuard 内核（随应用打包，不联网）。</li>
+  <li>我们不会出售、出租或以任何形式向第三方提供你的数据。</li>
 </ul>
-<p>需要说明：没有任何系统能保证绝对安全。若设备已被控制、系统本身被攻破，应用层面的措施无法覆盖这些情形。</p>
 
-<h2>八、其他重要条款</h2>
-<p>本政策与应用内“许可证”页的《许可与第三方声明》共同说明 WGate 的数据处理方式。若本政策的某条与当地强制性法律冲突，以法律为准，其余条款继续有效。你使用本应用还受 GPL-3.0 许可约束。</p>
+<h2>四、数据存储与删除</h2>
+<p>所有数据保存在设备的应用私有目录中，随应用卸载一并删除。应用内也提供：</p>
+<ul>
+  <li>“设置 → 本地日志”：清空启动与内核日志；</li>
+  <li>备份与恢复：删除已导入的隧道。</li>
+</ul>
+<p>如你曾导出过备份文件，该文件存放在你选择的位置，需由你自行删除。</p>
 
-<h2>九、联系我们</h2>
-<p>邮箱：<strong>273156878@qq.com</strong>（15 个工作日内回复）<br>
-项目主页与问题反馈：<a href="https://github.com/simon2137/WGate">github.com/simon2137/WGate</a></p>
+<h2>五、未成年人保护</h2>
+<p>本应用不面向未成年人单独提供服务，也不收集任何年龄或身份信息。若未成年人使用本应用，应在监护人指导下进行。</p>
 
-<h2>十、本政策的更新</h2>
-<p>生效日期：2026 年 10 月 25 日。若应用功能变化导致数据处理方式改变，本页与仓库中的 <code>docs/PRIVACY.md</code> 会同步更新，重要变更会在应用更新说明中提示。继续使用即表示你接受更新后的政策。</p>
+<h2>六、政策变更</h2>
+<p>若应用功能变化导致数据处理方式改变，本政策会同步更新并在应用内与本页公示，重要变更会在应用更新说明中提示。</p>
+
+<h2>七、联系我们</h2>
+<p>对本政策有任何疑问，可通过以下方式联系：</p>
+<ul>
+  <li>邮箱：<strong>273156878@qq.com</strong></li>
+  <li>项目主页与问题反馈：<a href="https://github.com/simon2137/WGate">github.com/simon2137/WGate</a></li>
+</ul>
 
 <footer>
   WGate 是独立开发的客户端，与 WireGuard 官方无隶属关系；与上游开源项目 <strong>WG Tunnel</strong>（作者 Zane Schepke）同样没有任何隶属、赞助或背书关系——本项目只在其 MIT 许可下复用了该项目的界面与交互设计，并保留原始版权声明。“WireGuard” 是 Jason A. Donenfeld 的注册商标，本项目仅在描述协议兼容性时使用。
 </footer>
-
-</section>
-
-<!-- ============================ 繁體中文 ============================ -->
-<section class="lang" id="zh-Hant" lang="zh-Hant">
-
-<h1>WGate 隱私權政策</h1>
-<p class="meta">
-  <strong>生效日期</strong>：2026 年 10 月 25 日<br>
-  <strong>適用應用</strong>：WGate（HarmonyOS 版，套件名稱 <code>com.wgate.app</code>）<br>
-  <strong>版本</strong>：1.0.0
-</p>
-
-<p>本政策依華為應用市場的標準隱私聲明架構撰寫，並依 WGate 的實際功能逐條填寫。WGate 的開發者（下稱「我們」）明白個人資料對你的重要性。這一頁要回答的問題很簡單：你在使用 WGate 時，我們會不會知道你是誰、你連了哪裡。</p>
-
-<p><strong>一句話結論</strong>：WGate 不設帳號、不蒐集個人資料、不上報任何資料。它只做一件事——把你裝置上的流量加密後，送到<strong>你自己填寫的那台伺服器</strong>。</p>
-
-<h2>一、我們如何蒐集與使用個人資料</h2>
-<p>我們不蒐集、不儲存、不上傳你的個人資料。</p>
-<ul>
-  <li>沒有帳號體系：不需要手機號碼、電子郵件、姓名或任何身分資訊，也沒有註冊與登入入口。</li>
-  <li>沒有統計與埋點：不蒐集使用行為、裝置識別碼、當機記錄或安裝來源。</li>
-  <li>沒有廣告：不接入廣告 SDK，不做定向投放，不推送行銷訊息。</li>
-</ul>
-
-<h3>1.1 註冊與登入</h3>
-<p>不適用。WGate 沒有帳號，也不提供登入，因此不存在與帳號關聯的個人資料。</p>
-
-<h3>1.2 個人化推薦</h3>
-<p>不適用。本應用不含內容推薦功能，不會基於任何資訊向你推薦內容或服務。</p>
-
-<h3>1.3 廣告與行銷推廣</h3>
-<p>不適用。本應用不顯示廣告，不發送行銷推送，也不向第三方提供任何用於行銷的資訊。</p>
-
-<h3>1.4 在你裝置上產生並儲存的內容</h3>
-<p>為了讓你用得起來，WGate 會在<strong>你裝置上的應用私有目錄</strong>儲存下列內容。它們不會離開這台裝置，除非你本人主動匯出或顯示：</p>
-<table>
-  <tr><th>內容</th><th>存放位置</th><th>是否會離開裝置</th></tr>
-  <tr><td>通道設定（含私鑰、對端公鑰、位址、AllowedIPs 等）</td><td>應用私有設定儲存</td><td>否。只有你主動執行「匯出備份」或「顯示 QR code」時，才以你可見的形式輸出</td></tr>
-  <tr><td>應用設定（主題、語言、自動通道規則、DNS 等）</td><td>應用私有設定儲存</td><td>否</td></tr>
-  <tr><td>啟動與核心事件記錄</td><td>應用私有檔案目錄</td><td>否。你可以隨時查看、清除或匯出</td></tr>
-  <tr><td>連線期間的收發位元組數、握手時間</td><td>僅記憶體中統計</td><td>否</td></tr>
-</table>
-
-<h2>二、裝置權限呼叫</h2>
-<p>應用只申請完成功能所必需的 6 項權限，均為一般等級，且只在你使用對應功能時觸發：</p>
-<table class="perm">
-  <tr><th>權限</th><th>用途</th><th>觸發時機</th><th>拒絕的後果</th></tr>
-  <tr><td><code>ohos.permission.INTERNET</code></td><td>建立加密通道，與你設定的伺服器通訊</td><td>通道連線期間</td><td>通道無法運作，核心功能不可用</td></tr>
-  <tr><td><code>ohos.permission.GET_NETWORK_INFO</code></td><td>辨識目前網路類型（Wi-Fi / 行動數據 / 乙太網路），用於自動通道與斷線重連</td><td>網路狀態變化時</td><td>自動通道與重連失效，手動連線仍可用</td></tr>
-  <tr><td><code>ohos.permission.GET_WIFI_INFO</code></td><td>讀取目前 Wi-Fi 名稱，用於「連上某個 Wi-Fi 就啟動某條通道」的規則</td><td>網路切換時</td><td>Wi-Fi 規則失效，其餘功能正常</td></tr>
-  <tr><td><code>ohos.permission.KEEP_BACKGROUND_RUNNING</code></td><td>切到背景後保持通道連線，並在通知列顯示目前通道與流量</td><td>應用在背景時</td><td>切背景可能被系統中斷</td></tr>
-  <tr><td><code>ohos.permission.CAMERA</code></td><td>掃描 WireGuard 設定 QR code</td><td>僅當你點擊「掃描 QR code」時</td><td>可改用「貼上」匯入設定</td></tr>
-  <tr><td><code>ohos.permission.PRIVACY_WINDOW</code></td><td>顯示私鑰或 QR code 時阻擋系統截圖與錄影</td><td>該頁面顯示期間</td><td>可正常使用，僅少了這層防護</td></tr>
-</table>
-<p>你可以隨時在「系統設定 → 應用 → WGate → 權限」中撤回，也可以在應用內關閉通知、自動通道等開關；撤回即時生效，不影響其他功能。相機畫面只在掃描介面內即時解析，不儲存、不上傳。</p>
-
-<h2>三、對未成年人的保護</h2>
-<p>本應用不面向未成年人單獨提供服務，也不蒐集年齡或身分資訊。未成年人應在監護人指導下使用本應用。監護人如發現未成年人未經同意使用，可隨時解除安裝——解除安裝會一併刪除本機上的全部設定、偏好與記錄。</p>
-
-<h2>四、與第三方分享、轉讓、公開揭露</h2>
-<p>我們不出售、不出租、不以任何形式向第三方提供你的資訊，因為我們手上沒有這些資訊。</p>
-<ul>
-  <li><strong>不分享</strong>：應用不營運自有伺服器，不設中轉節點，不存在把資料交給第三方的環節。</li>
-  <li><strong>不轉讓</strong>：若發生合併、收購或破產清算，本應用不持有可轉讓的個人資料。</li>
-  <li><strong>不公開揭露</strong>：除法規強制要求外，我們不會揭露任何內容；由於不保有資料，也無從揭露。</li>
-</ul>
-<p>你的通道流量直接發往你在設定裡填寫的那台伺服器。那台伺服器由你本人建置和掌控，其記錄與隱私實務由該伺服器的營運者決定，不屬於本政策範圍。</p>
-
-<h2>五、第三方 SDK 與服務商</h2>
-<p>本應用<strong>未整合任何第三方 SDK</strong>：沒有廣告、統計、當機上報、推送、社交或支付 SDK。</p>
-<p>為實現協定與介面，應用內打包了下列開源元件。它們隨應用一起執行，不連網、不蒐集資訊、不向任何伺服器回傳資料：</p>
-<table>
-  <tr><th>元件</th><th>用途</th><th>授權</th><th>是否蒐集資訊</th></tr>
-  <tr><td>WireGuard 協定與通道核心（本專案自行編譯）</td><td>加密與傳輸</td><td>GPL-2.0</td><td>否</td></tr>
-  <tr><td>Monocypher</td><td>X25519 金鑰交換、ChaCha20-Poly1305</td><td>CC0-1.0 / BSD-2-Clause</td><td>否</td></tr>
-  <tr><td>BLAKE2s 參考實作</td><td>雜湊</td><td>CC0-1.0</td><td>否</td></tr>
-  <tr><td>Inter 字型</td><td>介面文字</td><td>SIL OFL 1.1</td><td>否</td></tr>
-  <tr><td>Material Symbols</td><td>介面圖示</td><td>Apache-2.0</td><td>否</td></tr>
-  <tr><td>HarmonyOS SDK / ArkUI</td><td>系統能力</td><td>華為 SDK 授權</td><td>系統能力，行為由系統決定</td></tr>
-</table>
-
-<h2>六、管理你的個人資料</h2>
-
-<h3>6.1 查閱與更正</h3>
-<p>本機儲存的內容都在應用內可見、可改：通道設定在通道詳情頁，設定在「設定」，記錄在「設定 → 本機記錄」。</p>
-
-<h3>6.2 刪除</h3>
-<p>你可以刪除單一通道、清除「本機記錄」，或在系統裡解除安裝應用。解除安裝會一併刪除全部設定、偏好與記錄，不在任何地方保留副本。</p>
-
-<h3>6.3 註銷帳號</h3>
-<p>不適用。本應用沒有帳號體系，無需註銷。</p>
-
-<h3>6.4 撤回同意</h3>
-<p>在系統設定中關閉單項權限，或在應用內關閉通知、狀態通知、自動通道等開關；撤回即時生效。</p>
-
-<h3>6.5 個人化推薦開關</h3>
-<p>不適用。本應用沒有推薦功能，也沒有相應開關。</p>
-
-<h3>6.6 停止營運</h3>
-<p>若本專案停止維護，我們會在專案首頁提前公告，並在公告期內保留原始碼與匯出方式，確保你能把設定帶走。本應用不含任何雲端資料，停止營運不會有資料損失。</p>
-
-<h2>七、我們如何保護你的個人資料</h2>
-
-<h3>7.1 儲存地點與期限</h3>
-<p>全部內容只儲存在你裝置上的應用私有目錄，不存放在我們的任何伺服器上，不涉及跨境傳輸。儲存期限由你決定：直到你刪除或解除安裝應用。</p>
-
-<h3>7.2 安全措施</h3>
-<ul>
-  <li>私鑰只在本機產生與使用，不離開裝置；</li>
-  <li>顯示私鑰或 QR code 時申請 <code>PRIVACY_WINDOW</code>，阻擋系統截圖與錄影；</li>
-  <li>備份匯出與 QR code 顯示都由你主動發起，應用不會自動外發；</li>
-  <li>不設後門、不設遙測；原始碼以 GPL-3.0 公開，可自行稽核；</li>
-  <li>傳輸使用 Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s，並相容 AmneziaWG 的混淆參數。</li>
-</ul>
-<p>需要說明：沒有任何系統能保證絕對安全。若裝置已被控制、系統本身被攻破，應用層面的措施無法涵蓋這些情形。</p>
-
-<h2>八、其他重要條款</h2>
-<p>本政策與應用內「授權」頁的《授權與第三方聲明》共同說明 WGate 的資料處理方式。若本政策的某條與當地強制性法律衝突，以法律為準，其餘條款繼續有效。你使用本應用還受 GPL-3.0 授權約束。</p>
-
-<h2>九、聯絡我們</h2>
-<p>電子郵件：<strong>273156878@qq.com</strong>（15 個工作日內回覆）<br>
-專案首頁與問題回報：<a href="https://github.com/simon2137/WGate">github.com/simon2137/WGate</a></p>
-
-<h2>十、本政策的更新</h2>
-<p>生效日期：2026 年 10 月 25 日。若應用功能變化導致資料處理方式改變，本頁與儲存庫中的 <code>docs/PRIVACY.md</code> 會同步更新，重要變更會在應用更新說明中提示。繼續使用即表示你接受更新後的政策。</p>
-
-<footer>
-  WGate 是獨立開發的客戶端，與 WireGuard 官方無隸屬關係；與上游開源專案 <strong>WG Tunnel</strong>（作者 Zane Schepke）同樣沒有任何隸屬、贊助或背書關係——本專案只在其 MIT 授權下重用了該專案的介面與互動設計，並保留原始著作權聲明。「WireGuard」是 Jason A. Donenfeld 的註冊商標，本專案僅在描述協定相容性時使用。
-</footer>
-
-</section>
-
-<!-- ============================ English ============================ -->
-<section class="lang" id="en" lang="en">
-
-<h1>WGate Privacy Policy</h1>
-<p class="meta">
-  <strong>Effective date</strong>: 25 October 2026<br>
-  <strong>Applies to</strong>: WGate for HarmonyOS (bundle <code>com.wgate.app</code>)<br>
-  <strong>Version</strong>: 1.0.0
-</p>
-
-<p>This policy follows AppGallery's standard privacy notice structure, filled in with what WGate actually does. The developer of WGate ("we") understands that personal data matters to you. The question this page answers is simple: while you use WGate, do we learn who you are or where you connect?</p>
-
-<p><strong>In one sentence</strong>: WGate has no accounts, collects no personal data and reports nothing back. It does one thing — it encrypts the traffic leaving your device and sends it to <strong>the server you entered yourself</strong>.</p>
-
-<h2>1. What personal data we collect and use</h2>
-<p>We do not collect, store or upload your personal data.</p>
-<ul>
-  <li>No accounts: no phone number, email address, name or identity is needed, and there is no sign-up or sign-in.</li>
-  <li>No analytics: no usage events, device identifiers, crash reports or install attribution.</li>
-  <li>No advertising: no ad SDK, no targeting, no marketing messages.</li>
-</ul>
-
-<h3>1.1 Registration and sign-in</h3>
-<p>Not applicable. WGate has no account and no sign-in, so there is no account-linked personal data.</p>
-
-<h3>1.2 Personalised recommendations</h3>
-<p>Not applicable. The app has no content feed and recommends nothing based on anything about you.</p>
-
-<h3>1.3 Advertising and marketing</h3>
-<p>Not applicable. The app shows no ads, sends no marketing push, and hands no information to anyone for marketing.</p>
-
-<h3>1.4 What the app creates and keeps on your device</h3>
-<p>To be usable at all, WGate stores the following in <strong>the app's private directory on your device</strong>. None of it leaves the device unless you export or display it yourself:</p>
-<table>
-  <tr><th>Data</th><th>Where it lives</th><th>Does it leave the device?</th></tr>
-  <tr><td>Tunnel configuration (private key, peer public key, addresses, AllowedIPs)</td><td>App-private preferences</td><td>No. It is emitted only when you choose Export backup or Show QR code</td></tr>
-  <tr><td>Settings (theme, language, auto-tunnel rules, DNS)</td><td>App-private preferences</td><td>No</td></tr>
-  <tr><td>Startup and engine event log</td><td>App-private files</td><td>No. You can view, clear or export it at any time</td></tr>
-  <tr><td>Bytes sent and received, handshake times during a session</td><td>Memory only</td><td>No</td></tr>
-</table>
-
-<h2>2. Device permissions</h2>
-<p>The app requests the six permissions its features need, all at normal level, and each is used only while the matching feature runs:</p>
-<table class="perm">
-  <tr><th>Permission</th><th>Purpose</th><th>When it is used</th><th>If you deny it</th></tr>
-  <tr><td><code>ohos.permission.INTERNET</code></td><td>Open the encrypted tunnel to the server you configured</td><td>While a tunnel is connected</td><td>The tunnel cannot work</td></tr>
-  <tr><td><code>ohos.permission.GET_NETWORK_INFO</code></td><td>Tell Wi-Fi, mobile data and Ethernet apart, for auto-tunnel and reconnection</td><td>When the network changes</td><td>Auto-tunnel and reconnect stop working; manual connect still does</td></tr>
-  <tr><td><code>ohos.permission.GET_WIFI_INFO</code></td><td>Read the current Wi-Fi name for "start this tunnel on that network" rules</td><td>When switching networks</td><td>Wi-Fi rules stop working; the rest is unaffected</td></tr>
-  <tr><td><code>ohos.permission.KEEP_BACKGROUND_RUNNING</code></td><td>Keep the tunnel up in the background and show it in the notification shade</td><td>While the app is in the background</td><td>The system may drop the tunnel when you leave the app</td></tr>
-  <tr><td><code>ohos.permission.CAMERA</code></td><td>Scan a WireGuard configuration QR code</td><td>Only when you tap Scan QR code</td><td>Import by pasting the text instead</td></tr>
-  <tr><td><code>ohos.permission.PRIVACY_WINDOW</code></td><td>Block screenshots and screen recording while a private key or QR code is shown</td><td>While that page is visible</td><td>The page still works, with one less safeguard</td></tr>
-</table>
-<p>You can withdraw any of them in Settings → Apps → WGate → Permissions, or switch off notifications and auto-tunnel inside the app. Withdrawal takes effect immediately and leaves the other features intact. Camera frames are decoded in the scanner and are never stored or uploaded.</p>
-
-<h2>3. Protection of minors</h2>
-<p>The app is not offered to minors as a standalone service and collects no age or identity information. Minors should use it under the guidance of a guardian. A guardian who finds a minor using it can uninstall the app at any time; uninstalling removes every configuration, setting and log on the device.</p>
-
-<h2>4. Sharing, transfer and public disclosure</h2>
-<p>We do not sell, rent or otherwise give your information to anyone, because we do not hold it.</p>
-<ul>
-  <li><strong>No sharing</strong>: the app runs no server of its own and no relay, so there is no step at which data could be handed to a third party.</li>
-  <li><strong>No transfer</strong>: in a merger, acquisition or insolvency there would be no personal data to transfer.</li>
-  <li><strong>No public disclosure</strong>: nothing is disclosed except where the law compels it; as no data is held, there is nothing to disclose.</li>
-</ul>
-<p>Your tunnel traffic goes directly to the server named in your own configuration. That server is built and controlled by you; its logs and privacy practices are decided by whoever operates it and are outside this policy.</p>
-
-<h2>5. Third-party SDKs and service providers</h2>
-<p>The app <strong>bundles no third-party SDK</strong>: no advertising, analytics, crash reporting, push, social or payment SDK.</p>
-<p>To speak the protocol and draw the interface, the app packages the open-source components below. They run inside the app, open no connections of their own, collect nothing and report nowhere:</p>
-<table>
-  <tr><th>Component</th><th>Used for</th><th>Licence</th><th>Collects data?</th></tr>
-  <tr><td>WireGuard protocol and tunnel core (compiled by this project)</td><td>Encryption and transport</td><td>GPL-2.0</td><td>No</td></tr>
-  <tr><td>Monocypher</td><td>X25519 key exchange, ChaCha20-Poly1305</td><td>CC0-1.0 / BSD-2-Clause</td><td>No</td></tr>
-  <tr><td>BLAKE2s reference implementation</td><td>Hashing</td><td>CC0-1.0</td><td>No</td></tr>
-  <tr><td>Inter typeface</td><td>Interface text</td><td>SIL OFL 1.1</td><td>No</td></tr>
-  <tr><td>Material Symbols</td><td>Interface icons</td><td>Apache-2.0</td><td>No</td></tr>
-  <tr><td>HarmonyOS SDK / ArkUI</td><td>Platform capabilities</td><td>Huawei SDK licence</td><td>Platform behaviour, decided by the system</td></tr>
-</table>
-
-<h2>6. Managing your data</h2>
-
-<h3>6.1 Access and correction</h3>
-<p>Everything stored on the device is visible and editable in the app: configurations on the tunnel detail page, settings under Settings, the log under Settings → Local logging.</p>
-
-<h3>6.2 Deletion</h3>
-<p>You can delete a single tunnel, clear Local logging, or uninstall the app. Uninstalling removes every configuration, setting and log, with no copy left anywhere.</p>
-
-<h3>6.3 Account deletion</h3>
-<p>Not applicable. The app has no accounts, so there is nothing to delete.</p>
-
-<h3>6.4 Withdrawing consent</h3>
-<p>Turn a permission off in system settings, or switch notifications, status notifications and auto-tunnel off in the app. Withdrawal takes effect immediately.</p>
-
-<h3>6.5 Recommendation settings</h3>
-<p>Not applicable. There is no recommendation feature, and therefore no switch for it.</p>
-
-<h3>6.6 If the project stops</h3>
-<p>If this project stops being maintained, notice will be posted on the project page in advance, and the source and export path will stay available for the notice period so you can take your configurations with you. No data lives in the cloud, so nothing is lost.</p>
-
-<h2>7. How your data is protected</h2>
-
-<h3>7.1 Where and for how long</h3>
-<p>Everything stays in the app's private directory on your device. Nothing is kept on any server of ours and nothing is transferred across borders. The retention period is yours to decide: until you delete the app or its data.</p>
-
-<h3>7.2 Safeguards</h3>
-<ul>
-  <li>The private key is generated and used on the device only, and never leaves it;</li>
-  <li>Showing a private key or QR code requests <code>PRIVACY_WINDOW</code>, which blocks screenshots and screen recording;</li>
-  <li>Backup export and QR display are started by you; the app never sends anything on its own;</li>
-  <li>No back doors and no telemetry; the source is published under GPL-3.0 and can be audited;</li>
-  <li>Traffic uses Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s, with AmneziaWG obfuscation parameters supported.</li>
-</ul>
-<p>To be clear: no system is perfectly secure. If the device is already controlled or the operating system itself is compromised, app-level measures cannot cover that.</p>
-
-<h2>8. Other important terms</h2>
-<p>This policy and the Licence &amp; third-party notices on the app's Licence page together describe how WGate handles data. If any clause conflicts with mandatory local law, the law prevails and the remaining clauses stay in force. Use of the app is also governed by GPL-3.0.</p>
-
-<h2>9. Contact us</h2>
-<p>Email: <strong>273156878@qq.com</strong> (replies within 15 working days)<br>
-Project page and issue tracker: <a href="https://github.com/simon2137/WGate">github.com/simon2137/WGate</a></p>
-
-<h2>10. Changes to this policy</h2>
-<p>Effective 25 October 2026. If a change in the app alters how data is handled, this page and <code>docs/PRIVACY.md</code> in the repository are updated together, and significant changes are noted in the app's release notes. Continuing to use the app means you accept the updated policy.</p>
-
-<footer>
-  WGate is an independent client. It is not affiliated with the WireGuard project, and it is not affiliated with, sponsored or endorsed by the upstream open-source app <strong>WG Tunnel</strong> (by Zane Schepke) either — this project reuses that app's interface and interaction design under its MIT licence and keeps the original copyright notice. "WireGuard" is a registered trademark of Jason A. Donenfeld; this project uses the name only to describe protocol compatibility.
-</footer>
-
-</section>
-
-<script>
-(function () {
-  var sections = document.querySelectorAll('.lang');
-  var links = document.querySelectorAll('.langs a');
-  function pick() {
-    var m = /[?&]lang=([^&]+)/.exec(location.search);
-    var want = m ? decodeURIComponent(m[1]) : 'zh';
-    if (!document.getElementById(want)) { want = want === 'zh-Hant' ? 'zh-Hant' : 'zh'; }
-    if (!document.getElementById(want)) { want = 'zh'; }
-    return want;
-  }
-  function show(id) {
-    sections.forEach(function (s) { s.classList.toggle('on', s.id === id); });
-    links.forEach(function (a) {
-      var on = a.getAttribute('data-lang') === id;
-      a.setAttribute('aria-current', on ? 'true' : 'false');
-    });
-    document.getElementById('root').setAttribute('lang', id === 'en' ? 'en' : (id === 'zh-Hant' ? 'zh-Hant' : 'zh-CN'));
-    document.title = id === 'en' ? 'WGate Privacy Policy' : (id === 'zh-Hant' ? 'WGate 隱私權政策' : 'WGate 隐私政策');
-  }
-  links.forEach(function (a) {
-    a.addEventListener('click', function (ev) {
-      ev.preventDefault();
-      var id = a.getAttribute('data-lang');
-      history.replaceState(null, '', '?lang=' + id);
-      show(id);
-      window.scrollTo(0, 0);
-    });
-  });
-  show(pick());
-})();
-</script>
 
 </body>
 </html>
