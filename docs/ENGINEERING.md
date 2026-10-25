@@ -81,7 +81,7 @@ WireGuard trademark policy does not allow it in a product name.
 | Import from another app | `Want` parameters `wgquick` (the whole configuration, real or literal `\n` line breaks), `name`, `connect` |
 | Key handling | generate key pairs and derive public keys in the native core |
 | Always-on resume | the last active tunnel is reconnected when the app restarts |
-| Split tunnelling | `ExcludedApps` bundle names bypass the tunnel |
+| Split tunnelling | `ExcludedApps` bundle names bypass the tunnel; read from the wg-quick text only — no picker in the UI |
 | Live stats | rx/tx bytes, handshake age, peers up, engine state, refreshed once per second |
 | Engine log | the native core keeps a ring of handshake/keepalive/socket events, shown in a sheet |
 | Endpoint check | resolves the selected tunnel's endpoint and sends one handshake at it, so a tunnel that never comes up can be told apart from a network or DNS problem |

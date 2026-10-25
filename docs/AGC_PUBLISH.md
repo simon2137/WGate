@@ -1,7 +1,7 @@
 # WGate 上架华为应用市场（AGC）手册
 
 > 目标产物：一个用**发布证书**签名的 `.app` 包，加上 AGC 后台的版本表单。
-> 本地已就绪：密钥库与 CSR；还缺：AGC 发下来的 `.cer` 和 `.p7b`。
+> 本地已就绪：密钥库、CSR、AGC 签发的 `.cer` 与 `.p7b`，出包脚本跑通，签名包已生成（见第 3 节）。还缺的是资质类材料：APP 备案号、软著。
 
 ## 0. 先过三道门槛（这三条决定"能不能上"，不是技术问题）
 
@@ -13,7 +13,7 @@
 | 2 | **APP 备案**（工信部） | ❌ 没有 | 2023-09 起国内分发的 App 必须有备案号，AGC 表单里有必填栏。个人也能备案，但要走通管局流程，约 20 个工作日 |
 | 3 | **软著**（计算机软件著作权） | ❓ 待确认 | 网络工具类经常被要求，正常 30~60 个工作日，可加急 |
 
-**最省时间的核对方式**：AGC 里把应用建起来，进"版本信息 → 提审"，看系统给这个分类弹出的"资质要求"清单——那是唯一权威答案，比任何文档都准。如果清单里出现"增值电信业务经营许可证"，国内这条路就要改道（见第 7 节）。
+**最省时间的核对方式**：AGC 里把应用建起来，进"版本信息 → 提审"，看系统给这个分类弹出的"资质要求"清单——那是唯一权威答案，比任何文档都准。如果清单里出现"增值电信业务经营许可证"，个人主体的国内这条路基本走不通，得转成企业主体，或者只做非大陆分发。
 
 官方依据（点开自查）：
 - [应用资质审核要求](https://developer.huawei.com/consumer/cn/doc/doccenter-submission/80301?docScope=all)
@@ -37,10 +37,10 @@
 | 密钥库口令 / 别名 | ✅ 已记录 | `signing/keystore-password.txt`（已在 .gitignore 里） |
 | 发布证书 `.cer` | ✅ 已申请 | `signing/wgate-release.cer`（AGC 签发，链到 Huawei CBG Root CA G2） |
 | 发布 Profile `.p7b` | ✅ 已申请 | `signing/wgate-release.p7b`（type release，bundle-name com.wgate.app） |
-| 签名好的 `.app` | ✅ 已出 | `build/outputs/default/wg-default-signed.app` ｜ 重签：`signing/sign-package.ps1` |
+| 签名好的 `.app` | ✅ 已出 | `dist/WGate-1.0.0-signed.app`（提审用这份）｜ 源头 `build/outputs/default/wg-default-signed.app` ｜ 重签：`signing/sign-package.ps1` |
 | 应用图标 216×216 | ✅ 已导出 | `signing/agc-assets/icon-216.png` |
 | 手机截图 4 张 | ✅ 已备 | `signing/agc-assets/screenshots/` |
-| 中英文案（见第 5 节） | ✅ 已写好 | 本文档第 5 节，可直接复制 |
+| 中英文案（见第 4 节） | ✅ 已写好 | 本文档第 4.2 / 4.3 节，可直接复制 |
 | 隐私政策正文 | ✅ 已上线 | https://simon2137.github.io/WGate/privacy.html |
 | APP 备案号 | ⛔ 待办 | 工信部备案系统 |
 | 软著证书 | ⛔ 待确认 | 视类目要求 |
@@ -58,7 +58,7 @@
 
 ---
 
-## 2. AGC 侧四步（你操作，我给要填的值和排错方法）
+## 2. AGC 侧四步 ✅ 已完成（留作复查：换机器、换证书、换包名时要重走）
 
 控制台：<https://developer.huawei.com/consumer/cn/service/josp/agc/index.html>
 先确认右上角是**已实名认证的个人账号**，然后从左下角"账号中心"把**开发者名称**设好（它会显示在应用详情页）。
@@ -116,19 +116,23 @@
 
 > 发布 Profile 与调试 Profile 用途不同：调试 Profile 绑设备 UDID，只能装到登记过的设备上；上架的包必须用发布 Profile。
 
-**做完这四步，把 `.cer` 和 `.p7b` 放进 `signing/` 告诉我一声，我接着配签名和出包。**
+这四步都已经走完，`signing/` 里的 `.cer` 和 `.p7b` 就是从这儿下来的。签名与出包见第 3 节；证书有效期到 2029-10-21，到期前重走一遍即可（换证书意味着换签名，同一个包名的升级链不能断，务必保管好 `wgate-release.p12`）。
 
 ---
 
 ## 3. 本地签名与出包 ✅ 已完成
 
-**产物**：`build/outputs/default/wg-default-signed.app`（1.8 MB）
+**产物**：`dist/WGate-1.0.0-signed.app`（1,847,688 B，SHA-256 `f516bc38…`），从 `build/outputs/default/wg-default-signed.app` 复制而来。
 
 | 校验项 | 结果 |
 |---|---|
-| 外层 App Pack 验签 | ✅ Verify success（证书链→Huawei CBG Root CA G2，EC 384） |
-| 内层 `entry-default.hap` 验签 | ✅ Verify success |
+| 外层 App Pack 验签 | ✅ Verify success（证书链 → Huawei CBG Root CA G2，EC 384） |
+| 内层 `entry-default.hap` 验签 | ✅ Verify success，`profile type is: release` |
 | 包内 profile | ✅ `bundle-name: com.wgate.app` / `type: release` / `app-distribution-type: app_gallery` |
+| 签名档有效期 | 2026-10-21 → 2029-10-21 |
+| 开发者 ID（profile 里的 `developer-id`） | `200086000020059589` |
+
+> 这一份是 2026-10-25 20:23 重打的，和提交 `33c29aa`（通知不再每次更新都响/震）同一份代码。**签名包会过期**——代码一变就得按 3.2 重新走一遍，别拿上一次的 `.app` 去提审。
 
 ### 3.1 为什么没走 hvigor 的 signingConfigs
 
@@ -152,7 +156,39 @@ powershell -ExecutionPolicy Bypass -File signing\sign-package.ps1
 
 `signing/sign-package.ps1` 从 `signing/keystore-password.txt` 读口令，密钥和口令都不进版本管理。
 
+```powershell
+# 3) 拷一份带版本号名字的到 dist，并记下指纹（提审时对得上）
+Copy-Item build\outputs\default\wg-default-signed.app dist\WGate-1.0.0-signed.app -Force
+(Get-FileHash dist\WGate-1.0.0-signed.app -Algorithm SHA256).Hash
+```
+
 > 想用回 IDE 那套也行：Project Structure → Signing Configs 选同一份 p12 / cer / p7b，IDE 会把密文和 `material/` 目录写好，之后 hvigor 就能直接出签名包。
+
+### 3.2.1 怎么确认包里是新代码
+
+签名只负责"来源可信"，不负责"内容是最新的"。提审前对着这两个点核一次：
+
+```powershell
+# 解出内层 hap
+$tmp = "$env:TEMP\wgapp"; Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::ExtractToDirectory((Resolve-Path build\outputs\default\wg-default-signed.app), $tmp)
+
+# 验签 + 看 profile 类型
+& "C:\Program Files\Huawei\DevEco Studio\jbr\bin\java.exe" -jar `
+  "C:\Program Files\Huawei\DevEco Studio\sdk\default\openharmony\toolchains\lib\hap-sign-tool.jar" `
+  verify-app -inFile "$tmp\entry-default.hap" -outProfile "$tmp\p.p7b"
+
+# 包里有没有这次改动的痕迹（举例：通知修复引入的 isAlertOnce 应为 1）
+python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1]); b=b''.join(z.read(n) for n in z.namelist() if n.endswith('modules.abc')); print('isAlertOnce', b.count(b'isAlertOnce'))" "$tmp\entry-default.hap"
+```
+
+`verify:` 那一行是 `Verify success`、`profile type is: release` 就对了。再确认源码侧干净：
+
+```powershell
+git status --short      # 应为空
+git log --oneline -1    # 记下这个提交号，和提审的包对上
+```
 
 ### 3.3 能不能装到设备上验证
 
@@ -173,7 +209,7 @@ powershell -ExecutionPolicy Bypass -File signing\sign-package.ps1
 | 应用分类 | 工具 → 网络工具 |
 | 年龄分级 | 按问卷如实选，工具类一般为 3+ |
 | 应用图标 | `signing/agc-assets/icon-216.png`（216×216 PNG） |
-| 截图 | `signing/agc-assets/screenshots/` 里 4 张，全部上传 |
+| 截图 | `signing/agc-assets/screenshots/` 里 4 张，全部上传：`01-tunnels-light.jpg`（自动隧道·浅色）、`02-tunnels-dark.jpg`（自动隧道·深色）、`03-add-tunnel.jpg`（添加隧道）、`04-settings.jpg`（设置） |
 
 > 截图原始尺寸 1280×2832（≈1:2.21）。若 AGC 提示比例超限，改用"深色/浅色"两张和一个设置页即可凑够 3 张；实在不行我按 9:16 重新排版。
 
@@ -291,21 +327,32 @@ AGC 会列出包内申请的权限，逐个填用途（必须中文）：
 ## 6. 后续版本
 
 1. `AppScope/app.json5` 里 `versionCode` +1、`versionName` 改成新版本号（两者都要改，versionCode 必须递增）。
-2. 重新 `assembleApp`，上传新的 `.app`。
-3. 证书和 Profile 不用换（除非证书过期或包名变更）。
+2. 重新出包，**两条都要跑**：`assembleApp` 只会产出未签名的 App Pack，签名是 `signing\sign-package.ps1` 干的活（见 3.2）。只跑第一条传上去会被 AGC 拒。
+3. 按 3.2.1 核一次内容，再上传新的 `.app`。
+4. 证书和 Profile 不用换（除非证书过期或包名变更）。
+
+> AGC 不接受同一个 `versionCode` 传两次。当前包是 `versionCode 1000000` / `versionName 1.0.0`——如果 1.0.0 已经提审过，改版本号再重打，否则上传时会直接报版本重复。
 
 ---
 
 ## 附：命令速查
 
 ```powershell
-# 出包
+# 出包（两步都要）
 $env:DEVECO_SDK_HOME = "C:\Program Files\Huawei\DevEco Studio\sdk"
 & "C:\Program Files\Huawei\DevEco Studio\tools\hvigor\bin\hvigorw.bat" assembleApp -p product=default -p buildMode=release --no-daemon
+powershell -ExecutionPolicy Bypass -File signing\sign-package.ps1
 
-# 工程自检（134 项）
+# 工程自检（136 项）
 python tools\check_keepalive.py
 
-# 验证签名是否生效
-bm dump -n com.wgate.app | Select-String appProvisionType
+# 验证签名是否生效（在工程侧，不用设备）
+$tmp = "$env:TEMP\wgapp"; Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+[System.IO.Compression.ZipFile]::ExtractToDirectory((Resolve-Path dist\WGate-1.0.0-signed.app), $tmp)
+& "C:\Program Files\Huawei\DevEco Studio\jbr\bin\java.exe" -jar "C:\Program Files\Huawei\DevEco Studio\sdk\default\openharmony\toolchains\lib\hap-sign-tool.jar" `
+  verify-app -inFile "$tmp\entry-default.hap" -outProfile "$tmp\p.p7b"
+
+# 装到设备上的包是另一份（debug 签名，用 hdc install），别拿去提审
+hdc install -r entry\build\default\outputs\default\entry-default-unsigned.hap
 ```
