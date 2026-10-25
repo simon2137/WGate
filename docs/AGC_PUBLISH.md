@@ -47,7 +47,7 @@
 | 发布 Profile `.p7b` | ✅ 已申请 | `signing/wgate-release.p7b`（type release，bundle-name com.wgate.app） |
 | 签名好的 `.app` | ✅ 已出 | `dist/WGate-1.0.0-signed.app`（提审用这份）｜ 源头 `build/outputs/default/wg-default-signed.app` ｜ 重签：`signing/sign-package.ps1` |
 | 应用图标 216×216 | ✅ 已导出 | `signing/agc-assets/icon-216.png` |
-| 截图：手机 / 平板 / 电脑 各 5 张 | ✅ 已备 | `signing/agc-assets/screenshots/{phone,tablet,pc}/01–05.png` |
+| 截图：简体中文 / 繁體中文 / English，三端各 5 张 | ✅ 已备 | `signing/agc-assets/screenshots/{zh,zh-Hant,en}/{phone,tablet,pc}/01–05.png`（手机另有 `phone-9x16/`） |
 | 中英文案（见第 4 节） | ✅ 已写好 | 本文档第 4.2 / 4.3 节，可直接复制 |
 | 隐私政策正文 | ✅ 已上线 | https://simon2137.github.io/WGate/privacy.html（含"与 WireGuard 官方、与上游 WG Tunnel 均无隶属关系"声明） |
 | APP 备案号 | ⛔ 待办 | 工信部备案系统 |
@@ -217,7 +217,7 @@ git log --oneline -1    # 记下这个提交号，和提审的包对上
 | 应用分类 | 工具 → 网络工具 |
 | 年龄分级 | 按问卷如实选，工具类一般为 3+ |
 | 应用图标 | `signing/agc-assets/icon-216.png`（216×216 PNG） |
-| 截图 | 三个终端各 5 张，全部上传：`signing/agc-assets/screenshots/phone/`（1280×2832）、`tablet/`（2880×1920）、`pc/`（2062×1385，已裁到应用窗口）。顺序：`01` 添加隧道 · `02` 自动隧道 · `03` 设置/外观 · `04` 外观/主题 · `05` 主题/通知。手机与平板是整屏，电脑是按窗口裁好的一张应用窗口图 |
+| 截图 | 三种语言 × 三个终端 × 5 张，共 45 张（另附手机 9:16 版 15 张）。目录：`signing/agc-assets/screenshots/{zh,zh-Hant,en}/{phone,tablet,pc}/01–05.png`。在 AGC「应用截图」处按语言分别上传：语言下拉选 简体中文 / 繁體中文 / English，各传该语言目录下的手机、平板、电脑三组。尺寸：手机 1280×2832（9:16 版 1080×1920）、平板 2880×1920、电脑 2062×1407（已裁到应用窗口）。顺序：`01` 添加隧道 · `02` 自动隧道 · `03` 设置 · `04` 外观 · `05` 主题。界面语言在应用内「设置 → 外观 → 语言」切换后重新截取，与上架包的实际文案一致 |
 
 > 截图原始尺寸 1280×2832（≈1:2.21）。若 AGC 提示比例超限，改用"深色/浅色"两张和一个设置页即可凑够 3 张；实在不行我按 9:16 重新排版。
 
@@ -331,7 +331,7 @@ AGC 会列出包内申请的权限，逐个填用途（必须中文）：
 | 隐私政策打不开 / 内容与申请权限不一致 | 见 4.4：地址已上线、权限清单与实际一致 |
 | 使用他人商标（WireGuard） | 描述里加了注册商标归属声明，图标/应用名不使用 WireGuard 标识 |
 | **与上游应用的关系说不清**（移植类应用常见追问："你是 WG Tunnel 作者吗？"） | 隐私政策页脚写明：与 WG Tunnel 及其作者无隶属、赞助、背书关系，只在其 MIT 许可下复用界面与交互设计，并保留原始版权声明；许可证页也印了上游版权与 GPL/MIT 全文 |
-| 截图与真实界面不符 | 15 张都是当前版本在模拟器上的真实截图（手机 Mate 90 Pro / 平板 MatePad Pro 13 / 电脑 MateBook Pro 窗口） |
+| 截图与真实界面不符 | 45 张都是当前版本在模拟器上的真实截图（手机 Mate 90 Pro / 平板 MatePad Pro 13 / 电脑 MateBook Pro 窗口），三种语言分别切换后截取 |
 
 ---
 
