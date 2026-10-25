@@ -257,10 +257,21 @@ WireGuard, VPN, 隧道, 加密, 网络工具, AmneziaWG, 内网, 隐私
 
 **发布地址**：<https://simon2137.github.io/WGate/privacy.html>（AGC 表单"隐私政策 URL"填这个）
 
-抓取复核：HTTP 200；正文含"与上游开源项目 **WG Tunnel**（作者 Zane Schepke）同样没有任何隶属、赞助或背书关系"；全文不再出现"分应用代理"。审核员点开看到的就是这两句。
+**写法**：按 AGC「隐私政策生成器」的标准模板组织，十个章节一一对应，内容按本应用实际情况填写（无账号、无 SDK、六项权限、数据只在本机、与上游无隶属关系）。同一页内置三种语言，右上角切换：
+
+| 语言 | 地址 |
+|---|---|
+| 简体中文（默认） | `.../privacy.html` |
+| 繁體中文 | `.../privacy.html?lang=zh-Hant` |
+| English | `.../privacy.html?lang=en` |
+
+AGC 只需要一个 URL；审核员打开默认是中文，页面顶部有语言切换。若商店按系统语言抓取，可把英文/繁中地址分别填到对应语种的商店信息里。
+
+抓取复核：HTTP 200；三种语言各自可读；正文含"与上游开源项目 **WG Tunnel**（作者 Zane Schepke）同样没有任何隶属、赞助或背书关系"；全文不再出现"分应用代理"。
 
 - GitHub Pages 配置为 `main` 分支 `/docs` 目录（`docs/.nojekyll` 关闭 Jekyll 处理，保证 HTML 原样输出）；推送后约 1 分钟生效，`gh api repos/simon2137/WGate/pages/builds/latest` 可看构建状态；
-- 同一份政策存在两处：`docs/PRIVACY.md`（仓库）与 `docs/privacy.html`（上架用），手写两份、必须同步。`check_keepalive.py` 第 19 节盯着这两份：都不许出现"分应用"，都必须含"WG Tunnel"免责声明；
+- 同一份政策存在两处：`docs/PRIVACY.md`（仓库，简体中文全文）与 `docs/privacy.html`（上架用，三语），手写两份、必须同步。`check_keepalive.py` 第 19 节盯着这两份：都不许出现"分应用"，都必须含"WG Tunnel"免责声明；
+- 生效日期与"最后更新"是同一处：页面顶部 meta、第十节、以及 `PRIVACY.md` 头部，改的时候一起改；
 - 如果哪天仓库改名/转移，这个 URL 会失效——AGC 审核前务必在浏览器里打开确认 200。
 
 ### 4.5 权限使用说明
