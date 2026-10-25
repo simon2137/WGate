@@ -622,6 +622,22 @@ check('a switch row that opens a page still shows a chevron',
       'this.hasSwitch && this.chevron' in row
       and auto.count('chevron: true') == 3)
 
+# 18. The ongoing notification is updated for as long as the tunnel carries
+#     traffic, and the platform replays the sound and the vibration on every
+#     update unless the request says otherwise: an update every two seconds rang
+#     and buzzed every two seconds. `isAlertOnce` is what stops that; the payload
+#     is also compared with what is already in the shade, and the transfer
+#     counters are rounded, so a quiet change does not republish at all.
+notifier = (ROOT / 'entry/src/main/ets/service/Notifier.ets').read_text(encoding='utf-8')
+notice = (ROOT / 'entry/src/main/ets/service/TunnelNotice.ets').read_text(encoding='utf-8')
+check('the tunnel notification only alerts once',
+      'isAlertOnce: true' in notifier
+      and 'isOngoing: true' in notifier
+      and 'if (title === Notifier.lastTitle && text === Notifier.lastText)' in notifier)
+check('the transfer counters in the shade move in steps',
+      'private static step(bytes: number): number' in notice
+      and 'formatBytes(TunnelNotice.step(rxBytes))' in notice)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:

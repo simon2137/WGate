@@ -56,6 +56,18 @@ export class TunnelNotice {
     return Tr.t('Wi-Fi');
   }
 
+  /**
+   * The transfer counters as they go into the shade, in 64 KiB steps.
+   *
+   * The text *is* the publish key, so a per-byte counter would republish the
+   * notification on every watchdog tick for as long as traffic flows — silent
+   * since `isAlertOnce`, but still a publish every two seconds. Rounding makes
+   * the text settle between updates instead of racing the counters.
+   */
+  private static step(bytes: number): number {
+    return Math.floor(bytes / 65536) * 65536;
+  }
+
   /** The text for one snapshot, or null when the user turned the shade off. */
   static compose(snapshot: BridgeStatus, tunnel: WgTunnel): TunnelNoticeText | null {
     /*
@@ -108,7 +120,7 @@ export class TunnelNotice {
       lines.push(Tr.tf('down for %1$s', duration(bucket)));
     }
     if (state === 'up' && SettingsStore.notification('transfer')) {
-      lines.push(`${formatBytes(rxBytes)} ↓ ${formatBytes(txBytes)} ↑`);
+      lines.push(`${formatBytes(TunnelNotice.step(rxBytes))} ↓ ${formatBytes(TunnelNotice.step(txBytes))} ↑`);
     }
     if (SettingsStore.notification('origin')) {
       lines.push(Tr.tf('via %1$s', TunnelNotice.networkLabel()));

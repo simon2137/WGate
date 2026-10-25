@@ -21,6 +21,9 @@ const ABILITY: string = 'EntryAbility';
 
 export class Notifier {
   private static agent: WantAgent | null = null;
+  /** The text already on screen, so an identical republish is not sent at all. */
+  private static lastTitle: string = '';
+  private static lastText: string = '';
 
   /**
    * The tap target. `launchType` is `singleton` in module.json5, so a tap while
@@ -46,6 +49,11 @@ export class Notifier {
   }
 
   static async update(title: string, text: string): Promise<void> {
+    if (title === Notifier.lastTitle && text === Notifier.lastText) {
+      return;
+    }
+    Notifier.lastTitle = title;
+    Notifier.lastText = text;
     try {
       const agent: WantAgent | undefined = await Notifier.agentFor();
       await notificationManager.publish({
@@ -55,6 +63,12 @@ export class Notifier {
           normal: { title: title, text: text }
         },
         notificationSlotType: notificationManager.SlotType.SERVICE_INFORMATION,
+        // `isAlertOnce` is the whole point: false (the default) replays the sound
+        // and the vibration on every update, and this notification is updated for
+        // as long as the tunnel carries traffic. With it, only the first publish
+        // alerts and later updates are sent at SlotLevel.LEVEL_LOW.
+        isAlertOnce: true,
+        isOngoing: true,
         wantAgent: agent
       });
     } catch (err) {
@@ -63,6 +77,8 @@ export class Notifier {
   }
 
   static async clear(): Promise<void> {
+    Notifier.lastTitle = '';
+    Notifier.lastText = '';
     try {
       await notificationManager.cancel(TUNNEL_NOTIFICATION_ID);
     } catch (err) {
