@@ -1,5 +1,7 @@
 # WGate 上架华为应用市场（AGC）手册
 
+> **最后与代码核对**：2026-10-25，提交 `a12665d`。文档里的数字（自检项数、包大小、提交号）都以这次核对为准；代码动过之后，先把本文档对应段落改掉再提审。
+
 > 目标产物：一个用**发布证书**签名的 `.app` 包，加上 AGC 后台的版本表单。
 > 本地已就绪：密钥库、CSR、AGC 签发的 `.cer` 与 `.p7b`，出包脚本跑通，签名包已生成（见第 3 节）。还缺的是资质类材料：APP 备案号、软著。
 
@@ -41,7 +43,7 @@
 | 应用图标 216×216 | ✅ 已导出 | `signing/agc-assets/icon-216.png` |
 | 手机截图 4 张 | ✅ 已备 | `signing/agc-assets/screenshots/` |
 | 中英文案（见第 4 节） | ✅ 已写好 | 本文档第 4.2 / 4.3 节，可直接复制 |
-| 隐私政策正文 | ✅ 已上线 | https://simon2137.github.io/WGate/privacy.html |
+| 隐私政策正文 | ✅ 已上线 | https://simon2137.github.io/WGate/privacy.html（含"与 WireGuard 官方、与上游 WG Tunnel 均无隶属关系"声明） |
 | APP 备案号 | ⛔ 待办 | 工信部备案系统 |
 | 软著证书 | ⛔ 待确认 | 视类目要求 |
 
@@ -249,8 +251,10 @@ WireGuard, VPN, 隧道, 加密, 网络工具, AmneziaWG, 内网, 隐私
 
 **发布地址**：<https://simon2137.github.io/WGate/privacy.html>（AGC 表单"隐私政策 URL"填这个）
 
-- 源码 `docs/privacy.html` 与 `docs/PRIVACY.md` 内容一致，改一处必须同步另一处；
-- GitHub Pages 配置为 `main` 分支 `/docs` 目录（`docs/.nojekyll` 关闭 Jekyll 处理，保证 HTML 原样输出）；
+抓取复核：HTTP 200；正文含"与上游开源项目 **WG Tunnel**（作者 Zane Schepke）同样没有任何隶属、赞助或背书关系"；全文不再出现"分应用代理"。审核员点开看到的就是这两句。
+
+- GitHub Pages 配置为 `main` 分支 `/docs` 目录（`docs/.nojekyll` 关闭 Jekyll 处理，保证 HTML 原样输出）；推送后约 1 分钟生效，`gh api repos/simon2137/WGate/pages/builds/latest` 可看构建状态；
+- 同一份政策存在两处：`docs/PRIVACY.md`（仓库）与 `docs/privacy.html`（上架用），手写两份、必须同步。`check_keepalive.py` 第 19 节盯着这两份：都不许出现"分应用"，都必须含"WG Tunnel"免责声明；
 - 如果哪天仓库改名/转移，这个 URL 会失效——AGC 审核前务必在浏览器里打开确认 200。
 
 ### 4.5 权限使用说明
@@ -312,14 +316,15 @@ AGC 会列出包内申请的权限，逐个填用途（必须中文）：
 2. 审核时长：首次一般 1–3 个工作日，资质类问题会更久。
 3. 审核状态在「我的应用 → 状态」看；被拒会给出具体条款编号，照着改就行。
 
-### 最常被拒的 5 个原因（都已经提前处理）
+### 最常被拒的 6 个原因（都已经提前处理）
 
 | 拒审点 | 处理 |
 |---|---|
 | 应用内含"翻墙/代理"表述 | 介绍里只写"访问自有内网"，删掉任何"科学上网/解锁"字样 |
-| 权限用途说明缺失或与功能不符 | 见 4.4，六个权限都有对应功能 |
-| 隐私政策打不开 / 内容与申请权限不一致 | 用 `docs/PRIVACY.md`，权限清单与实际一致 |
+| 权限用途说明缺失或与功能不符 | 见 4.5，六个权限都有对应功能 |
+| 隐私政策打不开 / 内容与申请权限不一致 | 见 4.4：地址已上线、权限清单与实际一致 |
 | 使用他人商标（WireGuard） | 描述里加了注册商标归属声明，图标/应用名不使用 WireGuard 标识 |
+| **与上游应用的关系说不清**（移植类应用常见追问："你是 WG Tunnel 作者吗？"） | 隐私政策页脚写明：与 WG Tunnel 及其作者无隶属、赞助、背书关系，只在其 MIT 许可下复用界面与交互设计，并保留原始版权声明；许可证页也印了上游版权与 GPL/MIT 全文 |
 | 截图与真实界面不符 | 四张截图都是当前版本的实机截图 |
 
 ---
@@ -343,7 +348,7 @@ $env:DEVECO_SDK_HOME = "C:\Program Files\Huawei\DevEco Studio\sdk"
 & "C:\Program Files\Huawei\DevEco Studio\tools\hvigor\bin\hvigorw.bat" assembleApp -p product=default -p buildMode=release --no-daemon
 powershell -ExecutionPolicy Bypass -File signing\sign-package.ps1
 
-# 工程自检（136 项）
+# 工程自检（138 项）
 python tools\check_keepalive.py
 
 # 验证签名是否生效（在工程侧，不用设备）
