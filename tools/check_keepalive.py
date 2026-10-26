@@ -651,6 +651,24 @@ check('neither copy of the privacy policy claims a per-app proxy',
 check('both copies of the privacy policy disclaim the upstream app',
       'WG Tunnel' in policy_md and 'WG Tunnel' in policy_html)
 
+# 21. Adding a tunnel has two more doors than the old paste-only sheet: a file or
+#     a zip of files, and `Create from scratch`, which is the same editor that
+#     edits an existing tunnel. Both are one tap away from the sheet, and the
+#     editor has to have a create path at all -- it used to return early when the
+#     id was not in the store, so a new tunnel could never be saved.
+home = (ROOT / 'entry/src/main/ets/pages/Home.ets').read_text(encoding='utf-8')
+editor = (ROOT / 'entry/src/main/ets/pages/ConfigEdit.ets').read_text(encoding='utf-8')
+check('the import sheet offers a file or zip',
+      'importFromFileOrZip()' in home and 'importFromZip(' in home
+      and "'.conf', '.wg', '.txt', '.zip'" in home)
+check('the import sheet offers a blank tunnel',
+      "router.pushUrl({ url: 'pages/ConfigEdit' })" in home)
+check('the editor can create a tunnel, not only edit one',
+      'this.creating' in editor and 'prepareNew(' in editor
+      and 't.id = Date.now().toString()' in editor)
+check('the editor refuses a tunnel without a private key or a peer',
+      "Tr.t('A private key is required')" in editor and "Tr.t('Add at least one peer')" in editor)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:

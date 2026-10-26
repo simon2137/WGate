@@ -468,7 +468,7 @@ export struct TunnelsView {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
-          Text(Tr.tf('via %1$s', tunnel.peers.length > 0 ? tunnel.peers[0].host : tunnel.address))
+          Text(Tr.tf('via %1$s', tunnel.peers.length > 0 && tunnel.peers[0].host.length > 0 ? tunnel.peers[0].host : tunnel.address))
             .fontSize(Type.BODY_SMALL)
             .fontFamily(FONT)
             .fontColor(Palette.MUTED)

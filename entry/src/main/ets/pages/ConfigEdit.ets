@@ -16,11 +16,25 @@ import { Tr } from '../i18n/Tr';
 function field(label: string, value: string, hint: string, secret: boolean,
                onEdit: (v: string) => void, action: string, onAction: () => void) {
   Column() {
-    Text(label)
-      .fontSize(Type.BODY_SMALL)
-      .fontFamily(FONT)
-      .fontColor(Palette.MUTED)
-      .width('100%')
+    Row() {
+      Text(label)
+        .fontSize(Type.LABEL_MEDIUM)
+        .fontFamily(FONT)
+        .fontColor(Palette.MUTED)
+        .layoutWeight(1)
+      if (action.length > 0) {
+        Text(action)
+          .fontSize(Type.LABEL_MEDIUM)
+          .fontFamily(FONT)
+          .fontColor(Palette.PRIMARY)
+          .onClick(() => {
+            onAction();
+          })
+      }
+    }
+    .width('100%')
+    .margin({ bottom: 6 })
+
     Row() {
       TextInput({ text: value, placeholder: hint })
         .fontSize(Type.BODY_MEDIUM)
@@ -35,21 +49,12 @@ function field(label: string, value: string, hint: string, secret: boolean,
         .onChange((v: string) => {
           onEdit(v);
         })
-      if (action.length > 0) {
-        Text(action)
-          .fontSize(Type.LABEL_MEDIUM)
-          .fontFamily(FONT)
-          .fontColor(Palette.PRIMARY)
-          .margin({ left: 12 })
-          .onClick(() => {
-            onAction();
-          })
-      }
     }
     .width('100%')
   }
   .alignItems(HorizontalAlign.Start)
   .width('100%')
+  .margin({ bottom: 16 })
 }
 
 /**
@@ -63,6 +68,8 @@ struct ConfigEdit {
   @StorageProp('theme_tick') themeTick: number = 0;
   @StorageProp('safe_top') safeTop: number = 40;
   @State tunnelId: string = '';
+  /** True when the screen was opened without an id: the form creates a tunnel. */
+  @State creating: boolean = false;
   @State name: string = '';
   @State privateKey: string = '';
   @State publicKey: string = '';
@@ -100,7 +107,33 @@ struct ConfigEdit {
     if (params !== undefined && params !== null && params.id !== undefined) {
       this.tunnelId = params.id;
     }
-    this.load();
+    if (this.tunnelId.length === 0) {
+      // The reference opens the same screen with a null configuration and
+      // treats that as "create"; nothing is loaded, the form is just empty.
+      this.creating = true;
+      this.prepareNew();
+    } else {
+      this.load();
+    }
+  }
+
+  /** A new tunnel starts from the model's defaults and the global ones. */
+  private prepareNew(): void {
+    const fresh = new WgTunnel();
+    const dns: string = SettingsStore.defaultDns();
+    this.addresses = fresh.address;
+    this.dns = dns.length > 0 ? dns : fresh.dns;
+    this.mtu = SettingsStore.defaultMtu().toString();
+    this.jc = fresh.jc.toString();
+    this.jmin = fresh.jmin.toString();
+    this.jmax = fresh.jmax.toString();
+    this.s1 = fresh.s1.toString();
+    this.s2 = fresh.s2.toString();
+    this.s3 = fresh.s3.toString();
+    this.h1 = fresh.h1.toString();
+    this.h2 = fresh.h2.toString();
+    this.h3 = fresh.h3.toString();
+    this.h4 = fresh.h4.toString();
   }
 
   private load(): void {
@@ -164,19 +197,19 @@ struct ConfigEdit {
       this.privateKey = b64.encodeToStringSync(raw(priv.data));
       this.publicKey = b64.encodeToStringSync(raw(pub.data));
       Diag.write('config-edit: rotated keys');
-      this.flash('New key pair generated');
+      this.flash(Tr.t('New key pair generated'));
     } catch (e) {
       Diag.write(`config-edit: key generation failed: ${e}`);
-      this.flash('Key generation is not available on this device');
+      this.flash(Tr.t('Key generation is not available on this device'));
     }
   }
 
   private copyPublicKey(): void {
     const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, this.publicKey);
     pasteboard.getSystemPasteboard().setData(data).then(() => {
-      this.flash('Public key copied');
+      this.flash(Tr.t('Public key copied'));
     }).catch(() => {
-      this.flash('Could not copy the public key');
+      this.flash(Tr.t('Could not copy the public key'));
     });
   }
 
@@ -199,13 +232,19 @@ struct ConfigEdit {
   }
 
   private save(): void {
-    const t: WgTunnel | null = TunnelStore.find(this.tunnelId);
+    const creating: boolean = this.creating;
+    const t: WgTunnel | null = creating ? new WgTunnel() : TunnelStore.find(this.tunnelId);
     if (t === null) {
       return;
     }
-    const trimmed: string = this.name.trim();
-    t.name = trimmed.length > 0 ? trimmed : t.name;
+    if (creating) {
+      t.id = Date.now().toString();
+    }
     t.privateKey = this.privateKey.trim();
+    if (creating && t.privateKey.length === 0) {
+      this.flash(Tr.t('A private key is required'));
+      return;
+    }
     t.publicKey = this.publicKey.trim();
     t.address = this.addresses.trim();
     t.listenPort = ConfigEdit.number(this.listenPort, 0);
@@ -226,13 +265,22 @@ struct ConfigEdit {
     t.h2 = ConfigEdit.number(this.h2, 2);
     t.h3 = ConfigEdit.number(this.h3, 3);
     t.h4 = ConfigEdit.number(this.h4, 4);
-    t.peers = this.peers.filter((p: WgPeer) => p.publicKey.trim().length > 0);
-    if (t.peers.length === 0) {
-      t.peers = this.peers;
+    const kept: WgPeer[] = this.peers.filter((p: WgPeer) => p.publicKey.trim().length > 0);
+    t.peers = kept.length > 0 ? kept : this.peers;
+    if (creating && t.peers.length === 0) {
+      this.flash(Tr.t('Add at least one peer'));
+      return;
+    }
+    const trimmed: string = this.name.trim();
+    if (trimmed.length > 0) {
+      t.name = trimmed;
+    } else if (creating) {
+      t.name = t.peers.length > 0 && t.peers[0].host.length > 0 ? t.peers[0].host : Tr.t('New tunnel');
     }
     TunnelStore.save(t);
-    Diag.write(`config-edit: saved ${t.name} (${toWgQuick(t).split('\n').length} lines)`);
-    this.flash('Saved');
+    Diag.write(`config-edit: ${creating ? 'created' : 'saved'} ${t.name} ` +
+      `(${toWgQuick(t).split('\n').length} lines)`);
+    this.flash(Tr.t('Configuration saved'));
     router.back();
   }
 
@@ -240,7 +288,7 @@ struct ConfigEdit {
   peerCard(peer: WgPeer, index: number) {
     Column() {
       Row() {
-        Text(`Peer ${index + 1}`)
+        Text(Tr.tf('Peer %1$s', (index + 1).toString()))
           .fontSize(Type.LABEL_MEDIUM)
           .fontFamily(FONT)
           .fontWeight(FontWeight.Medium)
@@ -257,27 +305,27 @@ struct ConfigEdit {
       .width('100%')
       .padding({ top: 8, bottom: 4 })
 
-      field(Tr.t('Public key'), peer.publicKey, 'base64 key', false, (v: string) => {
+      field(Tr.t('Public key'), peer.publicKey, Tr.t('base64 key'), false, (v: string) => {
         this.updatePeer(index, (p: WgPeer) => {
           p.publicKey = v;
         });
       }, '', () => {})
 
-      field('Preshared key', peer.presharedKey, 'optional', true, (v: string) => {
+      field(Tr.t('Preshared key'), peer.presharedKey, Tr.t('optional'), true, (v: string) => {
         this.updatePeer(index, (p: WgPeer) => {
           p.presharedKey = v;
         });
       }, '', () => {})
 
-      field('Persistent keepalive', peer.keepalive > 0 ? peer.keepalive.toString() : '',
-        '25 or 22-30, seconds', false, (v: string) => {
+      field(Tr.t('Persistent keepalive'), peer.keepalive > 0 ? peer.keepalive.toString() : '',
+        Tr.t('25 or 22-30, seconds'), false, (v: string) => {
           this.updatePeer(index, (p: WgPeer) => {
             p.keepalive = ConfigEdit.number(v, 0);
           });
         }, '', () => {})
 
       field(Tr.t('Endpoint'), peer.host.length > 0 ? `${peer.host}:${peer.port}` : '',
-        'server:port', false, (v: string) => {
+        Tr.t('server:port'), false, (v: string) => {
           const text: string = v.trim();
           const idx: number = text.lastIndexOf(':');
           this.updatePeer(index, (p: WgPeer) => {
@@ -290,7 +338,7 @@ struct ConfigEdit {
           });
         }, '', () => {})
 
-      field(Tr.t('Allowed IPs'), peer.allowedIPs, 'comma separated', false, (v: string) => {
+      field(Tr.t('Allowed IPs'), peer.allowedIPs, Tr.t('separate values with commas'), false, (v: string) => {
         this.updatePeer(index, (p: WgPeer) => {
           p.allowedIPs = v;
         });
@@ -320,13 +368,13 @@ struct ConfigEdit {
             router.back();
           })
           Column() {
-            Text(Tr.t('Edit tunnel'))
+            Text(this.creating ? Tr.t('New tunnel') : Tr.t('Edit tunnel'))
               .fontSize(Type.TITLE_LARGE)
               .fontFamily(FONT)
               .fontWeight(FontWeight.Medium)
               .fontColor(Palette.ON_SURFACE)
               .width('100%')
-            Text(this.name)
+            Text(this.creating && this.name.length === 0 ? Tr.t('Interface and one peer') : this.name)
               .fontSize(Type.BODY_SMALL)
               .fontFamily(FONT)
               .fontColor(Palette.MUTED)
@@ -362,13 +410,13 @@ struct ConfigEdit {
             SectionHeader({ label: Tr.t('Interface') })
 
             Column() {
-              field(Tr.t('Name'), this.name, 'tunnel name', false, (v: string) => {
+              field(Tr.t('Name'), this.name, Tr.t('tunnel name'), false, (v: string) => {
                 this.name = v;
               }, '', () => {})
-              field(Tr.t('Private key'), this.privateKey, 'base64 key', !this.showSensitive,
+              field(Tr.t('Private key'), this.privateKey, Tr.t('base64 key'), !this.showSensitive,
                 (v: string) => {
                   this.privateKey = v;
-                }, 'Rotate', () => {
+                }, Tr.t('Rotate'), () => {
                   this.rotateKeys();
                 })
               Column() {
@@ -400,37 +448,57 @@ struct ConfigEdit {
               .alignItems(HorizontalAlign.Start)
               .width('100%')
 
-              field('Addresses', this.addresses, 'comma separated', false, (v: string) => {
+              field(Tr.t('Addresses'), this.addresses, Tr.t('separate values with commas'), false, (v: string) => {
                 this.addresses = v;
               }, '', () => {})
-              field('Listen port', this.listenPort, 'random', false, (v: string) => {
+              field(Tr.t('Listen port'), this.listenPort, Tr.t('random'), false, (v: string) => {
                 this.listenPort = v;
               }, '', () => {})
-              field('DNS servers', this.dns, 'comma separated', false, (v: string) => {
+              field(Tr.t('DNS servers'), this.dns, Tr.t('separate values with commas'), false, (v: string) => {
                 this.dns = v;
               }, '', () => {})
-              field(Tr.t('MTU'), this.mtu, 'auto', false, (v: string) => {
+              field(Tr.t('MTU'), this.mtu, Tr.t('picked automatically'), false, (v: string) => {
                 this.mtu = v;
               }, '', () => {})
 
+              // Two independent rows: they used to share one click area, so
+              // tapping the scripts link also toggled the Amnezia block.
               Row() {
-                Text(this.showAmnezia ? 'Hide Amnezia options' : 'Show Amnezia options')
+                Text(this.showAmnezia ? Tr.t('Hide Amnezia options') : Tr.t('Show Amnezia options'))
                   .fontSize(Type.LABEL_MEDIUM)
                   .fontFamily(FONT)
                   .fontColor(Palette.PRIMARY)
                   .layoutWeight(1)
-                Text(this.showScripts ? 'Hide scripts' : 'Show scripts')
+                Image($r('app.media.ic_chevron_down'))
+                  .width(18)
+                  .height(18)
+                  .fillColor(Palette.MUTED)
+                  .rotate({ angle: this.showAmnezia ? 180 : 0 })
+              }
+              .width('100%')
+              .height(40)
+              .alignItems(VerticalAlign.Center)
+              .onClick(() => {
+                this.showAmnezia = !this.showAmnezia;
+              })
+
+              Row() {
+                Text(this.showScripts ? Tr.t('Hide scripts') : Tr.t('Show scripts'))
                   .fontSize(Type.LABEL_MEDIUM)
                   .fontFamily(FONT)
                   .fontColor(Palette.PRIMARY)
-                  .onClick(() => {
-                    this.showScripts = !this.showScripts;
-                  })
+                  .layoutWeight(1)
+                Image($r('app.media.ic_chevron_down'))
+                  .width(18)
+                  .height(18)
+                  .fillColor(Palette.MUTED)
+                  .rotate({ angle: this.showScripts ? 180 : 0 })
               }
               .width('100%')
-              .height(36)
+              .height(40)
+              .alignItems(VerticalAlign.Center)
               .onClick(() => {
-                this.showAmnezia = !this.showAmnezia;
+                this.showScripts = !this.showScripts;
               })
 
               if (this.showAmnezia) {
@@ -467,16 +535,16 @@ struct ConfigEdit {
               }
 
               if (this.showScripts) {
-                field('PreUp', this.preUp, 'comma separated', false, (v: string) => {
+                field('PreUp', this.preUp, '', false, (v: string) => {
                   this.preUp = v;
                 }, '', () => {})
-                field('PostUp', this.postUp, 'comma separated', false, (v: string) => {
+                field('PostUp', this.postUp, '', false, (v: string) => {
                   this.postUp = v;
                 }, '', () => {})
-                field('PreDown', this.preDown, 'comma separated', false, (v: string) => {
+                field('PreDown', this.preDown, '', false, (v: string) => {
                   this.preDown = v;
                 }, '', () => {})
-                field('PostDown', this.postDown, 'comma separated', false, (v: string) => {
+                field('PostDown', this.postDown, '', false, (v: string) => {
                   this.postDown = v;
                 }, '', () => {})
               }
@@ -486,7 +554,7 @@ struct ConfigEdit {
             .backgroundColor(Palette.SURFACE)
 
             if (this.peers.length > 0) {
-              SectionHeader({ label: this.peers.length === 1 ? 'Peer' : 'Peers' })
+              SectionHeader({ label: Tr.t('Peers') })
             }
             ForEach(this.peers, (peer: WgPeer, index: number) => {
               this.peerCard(peer, index);
@@ -507,8 +575,7 @@ struct ConfigEdit {
               this.addPeer();
             })
 
-            Text(Tr.t('The engine brings one interface up at a time; the hooks are written to the ') +
-              Tr.t('configuration text and are not executed by this build.'))
+            Text(Tr.t('The engine brings one interface up at a time; the hooks are written to the configuration text and are not executed by this build.'))
               .fontSize(Type.BODY_SMALL)
               .fontFamily(FONT)
               .fontColor(Palette.MUTED)

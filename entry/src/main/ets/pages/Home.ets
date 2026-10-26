@@ -1,6 +1,9 @@
 import { common } from '@kit.AbilityKit';
 import { router, window } from '@kit.ArkUI';
 import pasteboard from '@ohos.pasteboard';
+import { fileIo, picker } from '@kit.CoreFileKit';
+import { zlib } from '@kit.BasicServicesKit';
+import { util } from '@kit.ArkTS';
 import { WgTunnel, parseWgQuick, toWgQuick } from '../model/Tunnel';
 import { TunnelStore } from '../service/TunnelStore';
 import { SettingsStore } from '../service/SettingsStore';
@@ -62,7 +65,6 @@ struct Home {
   @State toast: string = '';
   @State sheet: string = SHEET_NONE;
   @State detailId: string = '';
-  @State importText: string = '';
   @State logsText: string = '';
   @State themeName: string = 'dark';
   @State preferredId: string = '';
@@ -170,27 +172,19 @@ struct Home {
     });
   }
 
-  private pasteFromClipboard(): void {
-    pasteboard.getSystemPasteboard().getData().then((data: pasteboard.PasteData) => {
-      this.importText = data.getPrimaryText();
-    }).catch(() => {
-      this.flash('The clipboard is empty');
-    });
-  }
-
-  private importConfig(): void {
-    const text: string = this.importText.trim();
-    if (text.length === 0) {
-      this.flash('Paste a configuration first');
-      return;
+  /**
+   * Stores one configuration text. Re-importing the same keys and endpoint
+   * updates the existing tunnel instead of piling up duplicates.
+   */
+  private storeImported(text: string, fallbackName: string): WgTunnel | null {
+    const raw: string = text.trim();
+    if (raw.length === 0) {
+      return null;
     }
-    const parsed: WgTunnel | null = parseWgQuick(text, 'Imported tunnel');
+    const parsed: WgTunnel | null = parseWgQuick(raw, fallbackName);
     if (parsed === null) {
-      this.flash('That is not a WireGuard configuration');
-      return;
+      return null;
     }
-    // Re-importing the same keys and endpoint updates the existing tunnel
-    // instead of piling up duplicates.
     const existing: WgTunnel[] = TunnelStore.list();
     for (let i = 0; i < existing.length; i++) {
       const other: WgTunnel = existing[i];
@@ -203,11 +197,117 @@ struct Home {
       }
     }
     TunnelStore.save(parsed);
-    this.importText = '';
+    this.applyInterfaceDefaults(parsed, raw);
+    return parsed;
+  }
+
+  private importFromClipboard(): void {
     this.sheet = SHEET_NONE;
-    this.reload();
-    this.flash(`Imported ${parsed.name}`);
-    this.applyInterfaceDefaults(parsed, text);
+    pasteboard.getSystemPasteboard().getData().then((data: pasteboard.PasteData) => {
+      let text: string = '';
+      try {
+        text = data.getPrimaryText();
+      } catch (e) {
+        Diag.write(`import: clipboard holds no text: ${e}`);
+      }
+      const tunnel: WgTunnel | null = this.storeImported(text, Tr.t('Imported configuration'));
+      if (tunnel === null) {
+        this.flash(Tr.t('The clipboard holds no WireGuard configuration'));
+        return;
+      }
+      this.reload();
+      this.flash(Tr.tf('Imported %1$s', tunnel.name));
+    }).catch(() => {
+      this.flash(Tr.t('The clipboard is empty'));
+    });
+  }
+
+  /** A picked document, read as UTF-8 text. */
+  private readPickedText(path: string): string {
+    const file = fileIo.openSync(path, fileIo.OpenMode.READ_ONLY);
+    try {
+      const info = fileIo.statSync(file.fd);
+      const buffer = new ArrayBuffer(info.size > 0 ? info.size : 4096);
+      const read = fileIo.readSync(file.fd, buffer);
+      const decoder = util.TextDecoder.create('utf-8');
+      return decoder.decodeToString(new Uint8Array(buffer, 0, read));
+    } finally {
+      fileIo.closeSync(file);
+    }
+  }
+
+  private static isConfiguration(name: string): boolean {
+    const lower: string = name.toLowerCase();
+    return lower.endsWith('.conf') || lower.endsWith('.wg') || lower.endsWith('.txt');
+  }
+
+  private async importFromFileOrZip(): Promise<void> {
+    this.sheet = SHEET_NONE;
+    try {
+      const context = getContext(this) as common.UIAbilityContext;
+      const documents = new picker.DocumentViewPicker(context);
+      const uris: string[] = await documents.select({
+        maxSelectNumber: 1,
+        fileSuffixFilters: ['.conf', '.wg', '.txt', '.zip']
+      });
+      if (uris.length === 0) {
+        return;
+      }
+      const uri: string = uris[0];
+      if (uri.toLowerCase().endsWith('.zip')) {
+        const count: number = await this.importFromZip(uri);
+        this.reload();
+        this.flash(count > 0 ? Tr.tf('Imported tunnels: %1$s', count.toString())
+          : Tr.t('That zip holds no configuration'));
+        return;
+      }
+      const tunnel: WgTunnel | null = this.storeImported(this.readPickedText(uri), Tr.t('Imported configuration'));
+      this.reload();
+      this.flash(tunnel === null ? Tr.t('That file is not a WireGuard configuration')
+        : Tr.tf('Imported %1$s', tunnel.name));
+    } catch (e) {
+      Diag.write(`import: file failed: ${e}`);
+      this.flash(Tr.t('Could not read that file'));
+    }
+  }
+
+  /**
+   * A zip of `.conf` files: the archive is copied into the cache, unpacked there
+   * (zlib only reads real paths, not document uris) and every configuration in
+   * it is imported.
+   */
+  private async importFromZip(uri: string): Promise<number> {
+    const context = getContext(this) as common.UIAbilityContext;
+    const work: string = `${context.cacheDir}/import-${Date.now()}`;
+    const out: string = `${work}/out`;
+    fileIo.mkdirSync(work);
+    try {
+      fileIo.copyFileSync(uri, `${work}/bundle.zip`);
+      await zlib.decompressFile(`${work}/bundle.zip`, out);
+      const queue: string[] = [out];
+      let count: number = 0;
+      while (queue.length > 0) {
+        const folder: string = queue.pop() as string;
+        const names: string[] = fileIo.listFileSync(folder);
+        for (let i = 0; i < names.length; i++) {
+          const path: string = `${folder}/${names[i]}`;
+          if (fileIo.statSync(path).isDirectory()) {
+            queue.push(path);
+          } else if (Home.isConfiguration(names[i])) {
+            if (this.storeImported(this.readPickedText(path), Tr.t('Imported configuration')) !== null) {
+              count++;
+            }
+          }
+        }
+      }
+      return count;
+    } finally {
+      try {
+        fileIo.rmdirSync(work);
+      } catch (e) {
+        Diag.write(`import: cache cleanup failed: ${e}`);
+      }
+    }
   }
 
   /**
@@ -272,60 +372,67 @@ struct Home {
     .alignItems(VerticalAlign.Center)
   }
 
+  /** One row of the import sheet, the same shape as `TunnelImportSheet.kt`. */
+  @Builder
+  private importOption(icon: Resource, title: string, description: string, onTap: () => void) {
+    Row() {
+      Image(icon)
+        .width(24)
+        .height(24)
+        .fillColor(Palette.ON_SURFACE)
+      Column() {
+        Text(title)
+          .fontSize(Type.BODY_LARGE)
+          .fontFamily(FONT)
+          .fontColor(Palette.ON_SURFACE)
+          .width('100%')
+        if (description.length > 0) {
+          Text(description)
+            .fontSize(Type.BODY_SMALL)
+            .fontFamily(FONT)
+            .fontColor(Palette.MUTED)
+            .width('100%')
+            .margin({ top: 2 })
+        }
+      }
+      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+      .margin({ left: 16 })
+    }
+    .width('100%')
+    .height(description.length > 0 ? 72 : 60)
+    .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
+    .alignItems(VerticalAlign.Center)
+    .onClick(onTap)
+  }
+
   @Builder
   private importSheet() {
     Column() {
       this.sheetHeader(Tr.t('Add tunnel'))
-      Column() {
-        Text(Tr.t('Paste a WireGuard configuration, or scan its QR code.'))
-          .fontSize(Type.BODY_SMALL)
-          .fontFamily(FONT)
-          .fontColor(Palette.MUTED)
-          .width('100%')
-          .margin({ bottom: 12 })
-        TextArea({ text: this.importText, placeholder: '[Interface]\nPrivateKey = …' })
-          .height(180)
-          .width('100%')
-          .backgroundColor(Palette.SURFACE)
-          .fontColor(Palette.ON_SURFACE)
-          .fontSize(Type.BODY_SMALL)
-          .fontFamily(FONT)
-          .borderRadius(8)
-          .onChange((value: string) => {
-            this.importText = value;
+      Scroll() {
+        Column() {
+          this.importOption($r('app.media.ic_folder'), Tr.t('Add from file or zip'),
+            Tr.t('.conf, .wg, or a zip of them'), () => {
+              this.importFromFileOrZip();
+            })
+          this.importOption($r('app.media.ic_qr'), Tr.t('Add from QR code'), '', () => {
+            this.sheet = SHEET_NONE;
+            router.pushUrl({ url: 'pages/Scan' });
           })
-        Row() {
-          Button(Tr.t('Paste'))
-            .fontColor(Palette.ON_SURFACE)
-            .backgroundColor(Palette.RAISED)
-            .layoutWeight(1)
-            .onClick(() => {
-              this.pasteFromClipboard();
-            })
-          Button(Tr.t('Scan QR'))
-            .fontColor(Palette.ON_SURFACE)
-            .backgroundColor(Palette.RAISED)
-            .layoutWeight(1)
-            .margin({ left: 8 })
-            .onClick(() => {
-              this.sheet = SHEET_NONE;
-              router.pushUrl({ url: 'pages/Scan' });
-            })
+          this.importOption($r('app.media.ic_copy'), Tr.t('Add from clipboard'), '', () => {
+            this.importFromClipboard();
+          })
+          this.importOption($r('app.media.ic_add'), Tr.t('Create from scratch'), '', () => {
+            this.sheet = SHEET_NONE;
+            router.pushUrl({ url: 'pages/ConfigEdit' });
+          })
         }
         .width('100%')
-        .margin({ top: 12 })
-        Button(Tr.t('Import'))
-          .fontColor(Palette.BACKGROUND)
-          .backgroundColor(Palette.PRIMARY)
-          .width('100%')
-          .margin({ top: 12 })
-          .onClick(() => {
-            this.importConfig();
-          })
       }
-      .width('100%')
-      .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
-      .alignItems(HorizontalAlign.Start)
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .align(Alignment.Top)
     }
     .width('100%')
     .height('100%')

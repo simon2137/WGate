@@ -1183,7 +1183,7 @@ struct Index {
         .borderRadius(10)
         .fontSize(12)
         .onChange((value: string) => this.setPeer(index, 'publicKey', value))
-      TextInput({ text: peer.presharedKey, placeholder: Tr.t('Preshared key (optional)') })
+      TextInput({ text: peer.presharedKey, placeholder: Tr.t('Preshared key') })
         .placeholderColor('#5A6B7D')
         .fontColor('#EAF2FB')
         .backgroundColor('#101B27')

@@ -328,6 +328,142 @@ AUTHORED: dict[str, dict[str, str]] = {
     # The contact section links the source of this build. The reference only
     # words a link to its issue tracker ("Open an issue"), which is the wrong
     # page to send a reader of the repository to.
+    # Add-tunnel sheet (`Home.ets`) and the file/zip importer. The reference has
+    # the row titles; everything the importer says back to the user is ours.
+    # The two Imported* keys must not share a prefix: `check_catalog_rows.py`
+    # rejects a key that another key starts with.
+    '.conf, .wg, or a zip of them': {
+        'zh_CN': '.conf、.wg，或它们的 zip 压缩包',
+        'zh_TW': '.conf、.wg，或它們的 zip 壓縮檔',
+    },
+    'Imported %1$s': {
+        'zh_CN': '已导入 %1$s',
+        'zh_TW': '已匯入 %1$s',
+    },
+    'Imported tunnels: %1$s': {
+        'zh_CN': '已导入 %1$s 条隧道',
+        'zh_TW': '已匯入 %1$s 條隧道',
+    },
+    'Imported configuration': {
+        'zh_CN': '导入的配置',
+        'zh_TW': '匯入的設定',
+    },
+    'That file is not a WireGuard configuration': {
+        'zh_CN': '这个文件不是 WireGuard 配置',
+        'zh_TW': '這個檔案不是 WireGuard 設定',
+    },
+    'That zip holds no configuration': {
+        'zh_CN': '这个压缩包里没有配置文件',
+        'zh_TW': '這個壓縮檔裡沒有設定檔',
+    },
+    'Could not read that file': {
+        'zh_CN': '读不了这个文件',
+        'zh_TW': '讀不到這個檔案',
+    },
+    'The clipboard is empty': {
+        'zh_CN': '剪贴板是空的',
+        'zh_TW': '剪貼簿是空的',
+    },
+    'The clipboard holds no WireGuard configuration': {
+        'zh_CN': '剪贴板里没有 WireGuard 配置',
+        'zh_TW': '剪貼簿裡沒有 WireGuard 設定',
+    },
+    # Configuration editor (`ConfigEdit.ets`). The reference has labels for most
+    # of these; the ones it phrases differently, or has no string for at all,
+    # are authored here. `new_tunnel` is the create-mode title, matching the
+    # reference opening the same screen with a null configuration.
+    'Preshared key': {
+        'zh_CN': '预共享密钥',
+        'zh_TW': '預先共用金鑰',
+    },
+    'Show Amnezia options': {
+        'zh_CN': '显示 Amnezia 参数',
+        'zh_TW': '顯示 Amnezia 參數',
+    },
+    'Hide Amnezia options': {
+        'zh_CN': '隐藏 Amnezia 参数',
+        'zh_TW': '隱藏 Amnezia 參數',
+    },
+    'Rotate': {
+        'zh_CN': '重新生成',
+        'zh_TW': '重新產生',
+    },
+    'base64 key': {
+        'zh_CN': 'base64 密钥',
+        'zh_TW': 'base64 金鑰',
+    },
+    'optional': {
+        'zh_CN': '可选',
+        'zh_TW': '選填',
+    },
+    'separate values with commas': {
+        'zh_CN': '多个值以逗号分隔',
+        'zh_TW': '多個值以逗號分隔',
+    },
+    'server:port': {
+        'zh_CN': '服务器:端口',
+        'zh_TW': '伺服器:埠',
+    },
+    'tunnel name': {
+        'zh_CN': '隧道名称',
+        'zh_TW': '隧道名稱',
+    },
+    'random': {
+        'zh_CN': '随机',
+        'zh_TW': '隨機',
+    },
+    'The engine brings one interface up at a time; the hooks are written to the configuration text and are not executed by this build.': {
+        'zh_CN': '引擎一次只启用一个接口；钩子会写入配置文本，但本版本不执行它们。',
+        'zh_TW': '引擎一次只啟用一個介面；鉎子會寫入設定文字，但本版本不會執行它們。',
+    },
+    'Peer %1$s': {
+        'zh_CN': '对端 %1$s',
+        'zh_TW': '節點 %1$s',
+    },
+    'picked automatically': {
+        'zh_CN': '自动选择',
+        'zh_TW': '自動選擇',
+    },
+    '25 or 22-30, seconds': {
+        'zh_CN': '25，或 22-30，单位秒',
+        'zh_TW': '25，或 22-30，單位秒',
+    },
+    'New tunnel': {
+        'zh_CN': '新建隧道',
+        'zh_TW': '新增隧道',
+    },
+    'Interface and one peer': {
+        'zh_CN': '填写接口和一个对端',
+        'zh_TW': '填寫介面與一個對端',
+    },
+    'A private key is required': {
+        'zh_CN': '必须填写私钥',
+        'zh_TW': '必須填寫私鑰',
+    },
+    'Add at least one peer': {
+        'zh_CN': '至少要添加一个对端',
+        'zh_TW': '至少要新增一個對端',
+    },
+    'New key pair generated': {
+        'zh_CN': '已生成新的密钥对',
+        'zh_TW': '已產生新的金鑰對',
+    },
+    'Key generation is not available on this device': {
+        'zh_CN': '这台设备无法生成密钥',
+        'zh_TW': '這台裝置無法產生金鑰',
+    },
+    'Public key copied': {
+        'zh_CN': '公钥已复制',
+        'zh_TW': '公開金鑰已複製',
+    },
+    'Could not copy the public key': {
+        'zh_CN': '复制公钥失败',
+        'zh_TW': '複製公開金鑰失敗',
+    },
+    'Configuration saved': {
+        'zh_CN': '配置已保存',
+        'zh_TW': '設定已儲存',
+    },
     'Project on GitHub': {
         'zh_CN': '开源项目',
         'zh_TW': '開源專案',
