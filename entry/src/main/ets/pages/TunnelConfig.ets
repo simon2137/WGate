@@ -161,6 +161,10 @@ struct TunnelConfig {
           Column() {
             Text(this.live ? Tr.t('Live tunnel') : Tr.t('Configuration'))
               .fontSize(Type.TITLE_LARGE)
+              .minFontSize(14)
+              .maxFontSize(Type.TITLE_LARGE)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
               .fontFamily(FONT)
               .fontWeight(FontWeight.Medium)
               .fontColor(Palette.ON_SURFACE)
@@ -169,6 +173,8 @@ struct TunnelConfig {
               .fontSize(Type.BODY_SMALL)
               .fontFamily(FONT)
               .fontColor(Palette.MUTED)
+              .maxLines(1)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
               .width('100%')
           }
           .alignItems(HorizontalAlign.Start)
