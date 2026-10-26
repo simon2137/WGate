@@ -13,14 +13,14 @@ interface ThemeOption {
 
 /**
  * `ThemedTheme` in the reference: Dark, Light, Automatic, Dynamic, Darker,
- * AMOLED. Automatic leads, because it is the default a fresh install starts on
- * and the list should read the way the app behaves; Dynamic is gone, since
+ * AMOLED. Automatic leads, because it is the default a fresh install starts on;
+ * the rest runs from the lightest palette to the darkest; Dynamic is gone, since
  * HarmonyOS has no accent-colour API to follow.
  */
 const THEMES: ThemeOption[] = [
   { value: 'automatic', title: Tr.t('Automatic'), note: Tr.t('Follow the system appearance') },
-  { value: 'dark', title: Tr.t('Dark'), note: Tr.t('The default palette') },
   { value: 'light', title: Tr.t('Light'), note: Tr.t('Light surfaces on a white background') },
+  { value: 'dark', title: Tr.t('Dark'), note: Tr.t('The default palette') },
   { value: 'darker', title: Tr.t('Darker'), note: Tr.t('Dim the surfaces a step further') },
   { value: 'amoled', title: Tr.t('AMOLED'), note: Tr.t('True black, for OLED panels') }
 ];

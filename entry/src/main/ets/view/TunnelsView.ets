@@ -1,4 +1,5 @@
 import { pasteboard } from '@kit.BasicServicesKit';
+import { taskpool } from '@kit.ArkTS';
 import { common } from '@kit.AbilityKit';
 import { picker } from '@kit.CoreFileKit';
 import { fileIo } from '@kit.CoreFileKit';
@@ -22,6 +23,30 @@ const SHEET_ACTIONS: string = 'actions';
 const SHEET_GROUPS: string = 'groups';
 const SHEET_GROUP_ACTIONS: string = 'groupActions';
 const SHEET_SORT: string = 'sort';
+
+/**
+ * `wgcore.probe()` blocks: it resolves the endpoint and then waits for a
+ * handshake reply on the socket. Running that on the UI thread, once per
+ * tunnel, froze the list until the system killed the app, so it runs in a
+ * taskpool worker and hands back the RTTs as JSON (-1 for no answer).
+ */
+@Concurrent
+function probeLatencies(configs: string[]): string {
+  const rtts: number[] = [];
+  for (let i = 0; i < configs.length; i++) {
+    let rtt: number = -1;
+    try {
+      const report = JSON.parse(wgcore.probe(configs[i])) as Record<string, Object>;
+      if ((report.handshake as boolean) === true && typeof report.rttMs === 'number') {
+        rtt = report.rttMs as number;
+      }
+    } catch (err) {
+      rtt = -1;
+    }
+    rtts.push(rtt);
+  }
+  return JSON.stringify(rtts);
+}
 
 /**
  * The Tunnels tab, following `ui/screens/tunnels/TunnelList.kt`: groups with
@@ -51,6 +76,8 @@ export struct TunnelsView {
   @State groupTarget: string = '';
   @State renameDraft: string = '';
   @State sortMode: string = 'manual';
+  /** True while the taskpool is out measuring handshakes. */
+  @State probing: boolean = false;
 
   private timer: number = -1;
   private connectedAt: number = 0;
@@ -763,21 +790,33 @@ export struct TunnelsView {
    */
   private async sortByLatency(): Promise<void> {
     this.sheet = SHEET_NONE;
-    let measured: number = 0;
+    // The probe waits on the network; a second tap while it runs would only
+    // queue another round of handshakes.
+    if (this.probing) {
+      return;
+    }
+    this.probing = true;
+    const configs: string[] = [];
     for (let i = 0; i < this.tunnels.length; i++) {
-      const tunnel: WgTunnel = this.tunnels[i];
-      try {
-        const raw: string = wgcore.probe(JSON.stringify(JSON.parse(tunnel.toJson())));
-        const report = JSON.parse(raw) as Record<string, Object>;
-        const rtt = report.rttMs as number;
-        if ((report.handshake as boolean) === true && typeof rtt === 'number') {
-          SettingsStore.setLatency(tunnel.id, rtt);
-          measured++;
-        }
-      } catch (err) {
-        // a tunnel that cannot answer simply stays unsorted
+      configs.push(JSON.stringify(JSON.parse(this.tunnels[i].toJson())));
+    }
+    let rtts: number[] = [];
+    try {
+      rtts = JSON.parse(await taskpool.execute(probeLatencies, configs) as string) as number[];
+    } catch (err) {
+      this.probing = false;
+      Diag.write(`sort by latency: measurement failed: ${err}`);
+      this.onError(`Could not measure latency: ${(err as BusinessError).message}`);
+      return;
+    }
+    let measured: number = 0;
+    for (let i = 0; i < rtts.length && i < this.tunnels.length; i++) {
+      if (rtts[i] >= 0) {
+        SettingsStore.setLatency(this.tunnels[i].id, rtts[i]);
+        measured++;
       }
     }
+    this.probing = false;
     this.sortMode = 'latency';
     SettingsStore.setSortMode('latency');
     this.epoch++;

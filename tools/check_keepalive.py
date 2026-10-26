@@ -674,6 +674,30 @@ check('a rotated key pair comes from the engine that uses it',
 check('the editor refuses a tunnel without a private key or a peer',
       "Tr.t('A private key is required')" in editor and "Tr.t('Add at least one peer')" in editor)
 
+# 22. Two defects that only show up on a device.
+#     The theme list read Automatic, Dark, Light, Darker, AMOLED; the palettes
+#     should run from the lightest to the darkest, so Light comes before Dark.
+#     And "Sort by latency" called the blocking engine probe once per tunnel on
+#     the UI thread -- the list froze and the system killed the app. The probe
+#     has to travel to a taskpool worker, and a second tap must not queue a
+#     second round of handshakes.
+display_page = (ROOT / 'entry/src/main/ets/pages/Display.ets').read_text(encoding='utf-8')
+tunnels_view = (ROOT / 'entry/src/main/ets/view/TunnelsView.ets').read_text(encoding='utf-8')
+light_at = display_page.find("{ value: 'light'")
+dark_at = display_page.find("{ value: 'dark',")
+darker_at = display_page.find("{ value: 'darker'")
+amoled_at = display_page.find("{ value: 'amoled'")
+check('the theme list runs from the lightest palette to the darkest',
+      -1 not in (light_at, dark_at, darker_at, amoled_at)
+      and light_at < dark_at < darker_at < amoled_at)
+check('the latency probe runs in a worker, not on the UI thread',
+      '@Concurrent' in tunnels_view
+      and 'function probeLatencies' in tunnels_view
+      and 'taskpool.execute(probeLatencies' in tunnels_view
+      and 'wgcore.probe(' in tunnels_view.split('function probeLatencies')[1])
+check('sorting by latency cannot be started twice at once',
+      '@State probing: boolean' in tunnels_view and 'if (this.probing)' in tunnels_view)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:
