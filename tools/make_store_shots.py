@@ -2,12 +2,15 @@
 简体中文 (zh), 繁體中文 (zh-Hant) and English (en).
 
 Each language gets, under signing/agc-assets/screenshots/<lang>/:
-  phone/01–05.png        1280x2832, as captured
-  phone-9x16/01–05.png   1080x1920, centred on the app's own background colour
-  tablet/01–05.png       2880x1920
-  pc/01–05.png           cropped to the app window
+  phone/01–05.png    1080x1920, the 1280x2832 capture centred on its own background
+  tablet/01–05.png   1920x1280, the 2880x1920 capture scaled down (3:2, no crop)
+  pc/01–05.png       1920x1080, the app window cropped to 16:9
 
-and a contact sheet in build/store/contact-sheet-<lang>.png for review.
+AppGallery asks for exactly those three shapes, so the assembler produces them
+instead of leaving the devices' native sizes in the folder.
+
+The captures themselves live in build/store/<device>-<frame>.jpeg (zh) and
+<device>-{en,hant}-<nn>.jpeg (the other two languages).
 """
 
 from pathlib import Path
@@ -17,7 +20,13 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent.parent
 STORE = ROOT / 'build/store'
 OUT = ROOT / 'signing/agc-assets/screenshots'
-PC_BOX = (532, 287, 2594, 1668)
+
+# the 16:9 region inside the 2in1 window (left, top, right, bottom), device pixels
+PC_BOX = (523, 287, 2890, 1618)
+
+PHONE = (1080, 1920)
+TABLET = (1920, 1280)
+PC = (1920, 1080)
 
 # the five frames, in listing order
 FRAMES = ['01-add', '02-auto', '03-settings', '04-appearance', '05-theme']
@@ -46,10 +55,10 @@ def source(lang: str, device: str, frame: str) -> Path:
     return STORE / f'{device}-{frame}.jpeg'
 
 
-def nine_sixteen(image: Image.Image) -> Image.Image:
-    """Centre a phone frame on a 9:16 canvas filled with its own background."""
-    width, height = 1080, 1920
-    canvas = Image.new('RGB', (width, height), image.getpixel((4, 4))[:3])
+def fill(image: Image.Image, size: tuple) -> Image.Image:
+    """Fit the shot inside `size`, centred, on a canvas of its own background."""
+    width, height = size
+    canvas = Image.new('RGB', size, image.getpixel((4, 4))[:3])
     scale = min(width / image.size[0], height / image.size[1])
     small = image.convert('RGB').resize(
         (round(image.size[0] * scale), round(image.size[1] * scale)), Image.LANCZOS)
@@ -70,18 +79,17 @@ def main() -> None:
                     raise SystemExit(f'missing capture: {path}')
                 image = Image.open(path).convert('RGB')
                 if device == 'pc':
-                    image = image.crop(PC_BOX)
-                image.save(folder / f'{index:02d}.png', 'PNG')
-                frames.append(image)
-                print(f'{lang}/{device}/{index:02d}.png  {image.size[0]}x{image.size[1]}')
+                    out = image.crop(PC_BOX).resize(PC, Image.LANCZOS)
+                elif device == 'tablet':
+                    out = image.resize(TABLET, Image.LANCZOS)
+                else:
+                    out = fill(image, PHONE)
+                out.save(folder / f'{index:02d}.png', 'PNG')
+                frames.append(out)
+                print(f'{lang}/{device}/{index:02d}.png  {out.size[0]}x{out.size[1]}')
             rows.append((device, frames))
-            if device == 'phone':
-                nine = OUT / lang / 'phone-9x16'
-                nine.mkdir(parents=True, exist_ok=True)
-                for index, image in enumerate(frames, start=1):
-                    nine_sixteen(image).save(nine / f'{index:02d}.png', 'PNG')
 
-        # contact sheet: one row per device
+        # contact sheet: one row per device, all thumbnails the same height
         height = 300
         pad, gap, label_w = 20, 14, 96
         width = label_w + len(FRAMES) * (int(height * 16 / 9) + gap) + gap + 200
