@@ -49,6 +49,7 @@
 | 应用图标 216×216 | ✅ 已导出 | `signing/agc-assets/icon-216.png` |
 | 截图：简体中文 / 繁體中文 / English，三端各 5 张 | ✅ 已备 | `signing/agc-assets/screenshots/{zh,zh-Hant,en}/{phone,tablet,pc}/01–05.png`（手机另有 `phone-9x16/`） |
 | 中英文案（见第 4 节） | ✅ 已写好 | 本文档第 4.2 / 4.3 节，可直接复制 |
+| 应用中文名 | ✅ 已定 | **维门**（英文名仍是 WGate：应用名、包名、代码都不改；中文名只填在备案与商店展示名里） |
 | 隐私政策正文 | ✅ 已上线 | https://simon2137.github.io/WGate/privacy.html（含"与 WireGuard 官方、与上游 WG Tunnel 均无隶属关系"声明） |
 | APP 备案号 | ⛔ 待办 | 工信部备案系统 |
 | 软著证书 | ⛔ 待确认 | 视类目要求 |
