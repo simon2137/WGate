@@ -48,6 +48,7 @@
 | 签名好的 `.app` | ✅ 已出 | `dist/WGate-1.0.0-signed.app`（提审用这份）｜ 源头 `build/outputs/default/wg-default-signed.app` ｜ 重签：`signing/sign-package.ps1` |
 | 应用图标 216×216 | ✅ 已导出 | `signing/agc-assets/icon-216.png` |
 | 截图：简体中文 / 繁體中文 / English，三端各 5 张 | ✅ 已备 | `signing/agc-assets/screenshots/{zh,zh-Hant,en}/{phone,tablet,pc}/01–05.png`（手机另有 `phone-9x16/`） |
+| 截图里的隧道 | 演示数据 | 三台模拟器各导入同一组 `Home NAS` / `Office` / `Travel`：`build/make_demo_tunnels.py` 生成 `.conf`，`hdc file send` 到 `/data/local/tmp`，再用 `aa start … --ps wgquick "$(cat …)"` 走应用自己的分享导入，全程不需要键盘。清掉重来：列表长按 → ⋮ → Delete |
 | 中英文案（见第 4 节） | ✅ 已写好 | 本文档第 4.2 / 4.3 节，可直接复制 |
 | 应用中文名 | ✅ 已定 | **维门**（英文名仍是 WGate：应用名、包名、代码都不改；中文名只填在备案与商店展示名里） |
 | 隐私政策正文 | ✅ 已上线 | https://simon2137.github.io/WGate/privacy.html（含"与 WireGuard 官方、与上游 WG Tunnel 均无隶属关系"声明） |

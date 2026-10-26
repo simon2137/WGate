@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).resolve().parent.parent
 STORE = ROOT / 'build/store'
 OUT = ROOT / 'signing/agc-assets/screenshots'
-PC_BOX = (532, 287, 2594, 1694)
+PC_BOX = (532, 287, 2594, 1668)
 
 # the five frames, in listing order
 FRAMES = ['01-add', '02-auto', '03-settings', '04-appearance', '05-theme']
