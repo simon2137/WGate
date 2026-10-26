@@ -425,7 +425,7 @@ struct ConfigEdit {
               Column() {
                 Row() {
                   Text(Tr.t('Public key'))
-                    .fontSize(Type.BODY_SMALL)
+                    .fontSize(Type.LABEL_MEDIUM)
                     .fontFamily(FONT)
                     .fontColor(Palette.MUTED)
                     .layoutWeight(1)
@@ -438,6 +438,7 @@ struct ConfigEdit {
                     })
                 }
                 .width('100%')
+                .margin({ bottom: 6 })
                 TextInput({ text: this.publicKey, placeholder: Tr.t('derived from the private key') })
                   .fontSize(Type.BODY_MEDIUM)
                   .fontFamily(FONT)
@@ -450,6 +451,7 @@ struct ConfigEdit {
               }
               .alignItems(HorizontalAlign.Start)
               .width('100%')
+              .margin({ bottom: 16 })
 
               field(Tr.t('Addresses'), this.addresses, Tr.t('separate values with commas'), false, (v: string) => {
                 this.addresses = v;
