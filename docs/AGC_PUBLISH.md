@@ -356,7 +356,7 @@ $env:DEVECO_SDK_HOME = "C:\Program Files\Huawei\DevEco Studio\sdk"
 & "C:\Program Files\Huawei\DevEco Studio\tools\hvigor\bin\hvigorw.bat" assembleApp -p product=default -p buildMode=release --no-daemon
 powershell -ExecutionPolicy Bypass -File signing\sign-package.ps1
 
-# 工程自检（138 项）
+# 工程自检（147 项）
 python tools\check_keepalive.py
 
 # 验证签名是否生效（在工程侧，不用设备）
