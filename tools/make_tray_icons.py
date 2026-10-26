@@ -24,15 +24,20 @@ MARK = ROOT / 'build/icon-studio/tray-mark.png'
 OUT = SOURCE.parent
 
 SIDE = 128          # px; the bar scales it down to 24 vp
-PADDING = 0.06      # share of the side left empty around the mark
-BADGE = 0.26        # share of the side used by the "connected" dot
+PADDING = 0.01      # share of the side left empty around the mark
+BADGE = 0.24        # share of the side used by the "connected" dot
 GAP = 0.06          # transparent ring that separates the dot from the mark
+RING = False        # no bite out of the mark: the dot sits on the frame instead
 
 
 def mark() -> Image.Image:
-    """The white glyph of the app icon, as an alpha-only mask."""
+    """The white glyph of the app icon, as an alpha-only mask cropped to itself."""
     if MARK.exists():
-        return Image.open(MARK).convert('RGBA').getchannel('A')
+        alpha = Image.open(MARK).convert('RGBA').getchannel('A')
+        bounds = alpha.getbbox()
+        if bounds is None:
+            raise SystemExit(f'no mark found in {MARK}')
+        return alpha.crop(bounds)
     icon = Image.open(SOURCE).convert('RGBA')
     # The app icon is a white mark on a dark rounded square, so the mark is
     # whatever is bright: a luminance threshold keeps the glyph and drops the
@@ -69,10 +74,11 @@ def badge(image: Image.Image) -> Image.Image:
     radius = radius_of_gap(diameter)
     centre = (SIDE - diameter // 2 - round(SIDE * 0.02), SIDE - diameter // 2 - round(SIDE * 0.02))
     draw = ImageDraw.Draw(image)
-    # The gap is painted onto the *alpha* channel with a transparent fill, so
-    # the dot does not merge with the mark's descender.
-    gap_box = [centre[0] - radius, centre[1] - radius, centre[0] + radius, centre[1] + radius]
-    draw.ellipse(gap_box, fill=(0, 0, 0, 0))
+    if RING:
+        # The gap is painted onto the *alpha* channel with a transparent fill, so
+        # the dot does not merge with the mark's descender.
+        gap_box = [centre[0] - radius, centre[1] - radius, centre[0] + radius, centre[1] + radius]
+        draw.ellipse(gap_box, fill=(0, 0, 0, 0))
     dot_box = [centre[0] - diameter // 2, centre[1] - diameter // 2,
                centre[0] + diameter // 2, centre[1] + diameter // 2]
     draw.ellipse(dot_box, fill=(47, 191, 113, 255))

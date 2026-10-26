@@ -597,15 +597,19 @@ def plate():
 
 
 def tray_mark_door():
-    """台面图标：用图标的剪影（墙挖掉门洞），不用那道洞本身。
+    """台面图标：主图标的门洞和门槛，合成一个字形。
 
-    16–24 px 的状态栏里，一块带缺口的实心方块比一条细拱立得住，而且它就是桌面
-    图标缩小后的样子。想要更轻的那道拱，把 TRAY_MARKS 指到 tray_mark_arch。
+    门槛跟着字形同色——浅色状态栏上它就是黑的，深色栏上是白的，那道线才不会在
+    其中一种主题里消失。字形本身由 make_tray_icons.py 放大到接近占满画框。
     """
     pen = Pen()
     pen.block(104, 104, 408, 396, 80)
     pen.stroke([(256, 250), (256, 430)], 156, 0)
-    return pen.done()
+    door = pen.done()
+    bar = Pen()
+    bar.block(214, 330, 298, 356, 13)
+    door.paste(255, (0, 0), bar.done())
+    return door
 
 
 def tray_mark_arch():
