@@ -666,6 +666,11 @@ check('the import sheet offers a blank tunnel',
 check('the editor can create a tunnel, not only edit one',
       'this.creating' in editor and 'prepareNew(' in editor
       and 't.id = Date.now().toString()' in editor)
+check('the editor derives the public key from the private one',
+      "wgcore.publicKeyFrom(key)" in editor and 'this.syncPublicKey();' in editor)
+check('a rotated key pair comes from the engine that uses it',
+      'wgcore.generateKeyPair()' in editor)
+
 check('the editor refuses a tunnel without a private key or a peer',
       "Tr.t('A private key is required')" in editor and "Tr.t('Add at least one peer')" in editor)
 

@@ -1,7 +1,6 @@
 import { router } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
-import { util } from '@kit.ArkTS';
-import { cryptoFramework } from '@kit.CryptoArchitectureKit';
+import wgcore from 'libwgcore.so';
 import { pasteboard } from '@kit.BasicServicesKit';
 import { Palette, Type, ROW_PAD_H, BAR_SPACE, FONT } from '../theme/Theme';
 import { SectionHeader } from '../components/SurfaceRow';
@@ -181,27 +180,30 @@ struct ConfigEdit {
   }
 
   /** A fresh Curve25519 pair, the same rotate action as the reference. */
-  private async rotateKeys(): Promise<void> {
+  private rotateKeys(): void {
     try {
-      const generator = cryptoFramework.createAsyKeyGenerator('X25519');
-      const pair = await generator.generateKeyPair();
-      const priv: cryptoFramework.DataBlob = await (pair.priKey as cryptoFramework.PriKey)
-        .getEncoded();
-      const pub: cryptoFramework.DataBlob = await (pair.pubKey as cryptoFramework.PubKey)
-        .getEncoded();
-      const b64 = new util.Base64Helper();
-      // X25519 private keys come out as the raw 32 byte scalar, which is what
-      // wg-quick writes; the DER wrapper is stripped when present.
-      const raw = (bytes: Uint8Array) => bytes.length > 32 ?
-        bytes.subarray(bytes.length - 32) : bytes;
-      this.privateKey = b64.encodeToStringSync(raw(priv.data));
-      this.publicKey = b64.encodeToStringSync(raw(pub.data));
+      const pair: Record<string, string> = JSON.parse(wgcore.generateKeyPair()) as Record<string, string>;
+      this.privateKey = pair.private;
+      this.publicKey = pair.public;
       Diag.write('config-edit: rotated keys');
       this.flash(Tr.t('New key pair generated'));
     } catch (e) {
       Diag.write(`config-edit: key generation failed: ${e}`);
       this.flash(Tr.t('Key generation is not available on this device'));
     }
+  }
+
+  /**
+   * The public key follows the private key: derived when the field holds a
+   * 32 byte key, cleared otherwise. It used to keep whatever the last rotation
+   * produced, so a hand-typed private key ended up with a public key that did
+   * not belong to it.
+   */
+  private syncPublicKey(): void {
+    const key = this.privateKey.trim();
+    // The engine answers "" for anything that is not one base64 encoded 32 byte
+    // key, so there is nothing to validate twice.
+    this.publicKey = key.length > 0 ? wgcore.publicKeyFrom(key) : '';
   }
 
   private copyPublicKey(): void {
@@ -416,6 +418,7 @@ struct ConfigEdit {
               field(Tr.t('Private key'), this.privateKey, Tr.t('base64 key'), !this.showSensitive,
                 (v: string) => {
                   this.privateKey = v;
+                  this.syncPublicKey();
                 }, Tr.t('Rotate'), () => {
                   this.rotateKeys();
                 })
