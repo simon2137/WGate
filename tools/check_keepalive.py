@@ -584,10 +584,10 @@ check('the support page drops the upstream rows',
 check('the privacy policy is a page in the app',
       'pages/Privacy' in pages['src'] and PRIVACY.exists()
       and "router.pushUrl({ url: 'pages/Privacy' })" in support)
-check('the privacy page says what it has to',
-      all(needle in privacy for needle in
-          ['private preferences', 'startup trace', 'permissions', 'advertising SDK'])
-      and 'https://' not in privacy)
+check('the privacy page opens the hosted agreement',
+      'agreementId=2069872513088805568' in privacy
+      and 'context.openLink(url)' in privacy
+      and 'PARAGRAPHS' not in privacy)
 check('a fresh install opens on Simplified Chinese',
       "SettingsStore.get('language', 'zh_CN')" in store)
 check('a fresh install follows the system appearance',
@@ -661,18 +661,16 @@ check('the transfer counters in the shade move in steps',
       'private static step(bytes: number): number' in notice
       and 'formatBytes(TunnelNotice.step(rxBytes))' in notice)
 
-# 19. The privacy policy exists twice — `docs/PRIVACY.md` for the repository and
-#     `docs/privacy.html` for the URL the store listing points at — and the two
-#     drifted: the web copy went on advertising a per-app rule list months after
-#     the feature was dropped from the app. Whatever the policy claims has to be
-#     true of both copies, and neither may claim a per-app proxy: the app has no
-#     such screen, only an `ExcludedApps` line it reads out of a wg-quick file.
+# 19. The privacy policy is hosted by Huawei: the agreement the store generates
+#     for this app. Three places only have to agree on its id — the page inside
+#     the app, `docs/PRIVACY.md` and `docs/privacy.html`, which is the URL the
+#     store listing points at. They used to be two hand-written copies that
+#     drifted, which is why the id is pinned here instead of the wording.
 policy_md = (ROOT / 'docs/PRIVACY.md').read_text(encoding='utf-8')
 policy_html = (ROOT / 'docs/privacy.html').read_text(encoding='utf-8')
-check('neither copy of the privacy policy claims a per-app proxy',
-      '分应用' not in policy_md and '分应用' not in policy_html)
-check('both copies of the privacy policy disclaim the upstream app',
-      'WG Tunnel' in policy_md and 'WG Tunnel' in policy_html)
+check('both copies of the privacy policy point at the agreement',
+      'agreementId=2069872513088805568' in policy_md
+      and 'agreementId=2069872513088805568' in policy_html)
 
 # 21. Adding a tunnel has two more doors than the old paste-only sheet: a file or
 #     a zip of files, and `Create from scratch`, which is the same editor that

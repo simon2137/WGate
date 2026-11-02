@@ -468,6 +468,22 @@ AUTHORED: dict[str, dict[str, str]] = {
         'zh_CN': '开源项目',
         'zh_TW': '開源專案',
     },
+    'Hosted by Huawei, the same agreement the app store shows': {
+        'zh_CN': '由华为托管，与商店展示的协议一致',
+        'zh_TW': '由華為託管，與商店顯示的協議一致',
+    },
+    'The privacy policy is generated from this app’s details by the app store’s agreement service and hosted there. The button below opens it in your browser.': {
+        'zh_CN': '隐私政策由应用市场的协议服务依据本应用的信息生成并托管，下方按钮会用浏览器打开它。',
+        'zh_TW': '隱私權政策由應用程式商店的協議服務依據本應用程式的資訊產生並託管，下方按鈕會用瀏覽器開啟它。',
+    },
+    'Open the privacy policy': {
+        'zh_CN': '打开隐私政策',
+        'zh_TW': '開啟隱私權政策',
+    },
+    'Could not open a browser': {
+        'zh_CN': '无法打开浏览器',
+        'zh_TW': '無法開啟瀏覽器',
+    },
 }
 
 

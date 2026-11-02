@@ -109,7 +109,7 @@ export struct SupportView {
 
           SurfaceRow({
             title: Tr.t('Privacy policy'),
-            description: Tr.t('What stays on this device, and what never leaves it'),
+            description: Tr.t('Hosted by Huawei, the same agreement the app store shows'),
             icon: $r('app.media.ic_doc'),
             chevron: true,
             onTap: () => {

@@ -1,30 +1,43 @@
 import { router } from '@kit.ArkUI';
+import { promptAction } from '@kit.ArkUI';
+import { common } from '@kit.AbilityKit';
 import { Palette, Type, ROW_PAD_H, BAR_SPACE, FONT } from '../theme/Theme';
 import { Tr } from '../i18n/Tr';
 
 /**
- * The privacy policy, in the app rather than behind a link.
+ * The privacy policy is not written here any more: it is hosted by Huawei, the
+ * same agreement the store shows for this app, and this page opens it.
  *
- * Everything here is a statement about what this build actually does, so it is
- * kept next to the code that does it: the preferences live in
- * `service/SettingsStore.ets` and `service/TunnelStore.ets`, the trace in
- * `util/Diag.ets`, the permission list in `entry/src/main/module.json5`, and the
- * native core is the only thing that opens a socket.
+ * The link is the one below. `lang` follows the interface language, so the
+ * agreement opens in the language the user is reading the app in.
  */
-const PARAGRAPHS: string[] = [
-  Tr.t('No accounts, no telemetry, no analytics. This app runs no server of its own and does not upload your configuration anywhere.'),
-  Tr.t('Tunnel configurations, private keys included, are stored in the app’s private preferences on this device. They leave it only when you export a backup or show a QR code, and both of those are things you start.'),
-  Tr.t('The startup trace under Local logging stays in the app’s private files. It records state changes and errors, not packet contents, and you can clear it or export it at any time.'),
-  Tr.t('The permissions are the ones the app is named for: INTERNET and the WireGuard extension for tunnel traffic, GET_NETWORK_INFO and GET_WIFI_INFO to tell Wi-Fi from mobile data, CAMERA only while you scan a configuration. Nothing else is requested.'),
-  Tr.t('No advertising SDK, crash reporter or tracker is linked into this build. The only traffic the app generates is the tunnel itself.'),
-  Tr.t('Uninstalling the app removes the stored tunnels, the settings and the trace with it. There is no copy anywhere else.')
-];
+const AGREEMENT: string = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html' +
+  '?agreementId=2069872513088805568&lang=';
+
+function agreementUrl(): string {
+  const locale: string = Tr.locale();
+  if (locale === 'en') {
+    return AGREEMENT + 'en';
+  }
+  if (locale === 'zh_TW' || locale === 'zh_HK') {
+    return AGREEMENT + 'zh-Hant';
+  }
+  return AGREEMENT + 'zh';
+}
 
 @Entry
 @Component
 struct Privacy {
   @StorageProp('theme_tick') themeTick: number = 0;
   @StorageProp('safe_top') safeTop: number = 40;
+
+  private open(): void {
+    const url: string = agreementUrl();
+    const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    context.openLink(url).catch(() => {
+      promptAction.showToast({ message: Tr.t('Could not open a browser'), duration: 2500 });
+    });
+  }
 
   build() {
     Column() {
@@ -48,7 +61,7 @@ struct Privacy {
             .fontFamily(FONT)
             .fontWeight(FontWeight.Medium)
             .fontColor(Palette.ON_SURFACE)
-          Text(Tr.t('What stays on this device, and what never leaves it'))
+          Text(Tr.t('Hosted by Huawei, the same agreement the app store shows'))
             .fontSize(Type.BODY_SMALL)
             .fontFamily(FONT)
             .fontColor(Palette.MUTED)
@@ -64,27 +77,38 @@ struct Privacy {
 
       Scroll() {
         Column() {
-          ForEach(PARAGRAPHS, (line: string, index: number) => {
-            Text(line)
-              .fontSize(Type.BODY_MEDIUM)
-              .fontFamily(FONT)
-              .fontColor(Palette.ON_SURFACE)
-              .width('100%')
-              .padding({ left: ROW_PAD_H, right: ROW_PAD_H, top: 12, bottom: 12 })
-              .backgroundColor(Palette.SURFACE)
-              .margin({ top: index === 0 ? 8 : 1 })
-          }, (line: string) => line)
+          Text(Tr.t('The privacy policy is generated from this app’s details by the app store’s agreement service and hosted there. The button below opens it in your browser.'))
+            .fontSize(Type.BODY_MEDIUM)
+            .fontFamily(FONT)
+            .fontColor(Palette.ON_SURFACE)
+            .width('100%')
+            .padding({ top: 16, bottom: 16 })
 
-          Text(Tr.t('Last updated: October 2026'))
+          Button(Tr.t('Open the privacy policy'))
+            .width('100%')
+            .height(48)
+            .fontSize(Type.LABEL_MEDIUM)
+            .fontFamily(FONT)
+            .fontColor(Palette.BACKGROUND)
+            .backgroundColor(Palette.PRIMARY)
+            .borderRadius(24)
+            .margin({ top: 8 })
+            .onClick(() => {
+              this.open();
+            })
+
+          Text(agreementUrl())
             .fontSize(Type.BODY_SMALL)
             .fontFamily(FONT)
             .fontColor(Palette.MUTED)
             .width('100%')
-            .padding({ left: ROW_PAD_H, right: ROW_PAD_H, top: 14, bottom: 14 })
+            .padding({ top: 18, bottom: 14 })
+            .textAlign(TextAlign.Center)
 
           Column().height(BAR_SPACE)
         }
         .width('100%')
+        .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
       }
       .layoutWeight(1)
       .scrollBar(BarState.Off)
