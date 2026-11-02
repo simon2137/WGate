@@ -140,3 +140,5 @@ python tools\make_tray_icons.py        # 顺手把状态栏 / 托盘图标切出
 ## 想看得更深
 
 工程实现、平台限制、每个设计决定的来龙去脉，都写在 [docs/ENGINEERING.md](docs/ENGINEERING.md) 里。
+
+上架审核相关的说明（申请的权限、`backgroundModes` 里那项 `taskKeeping` 为什么只在 PC 上用、审核复现步骤）在 [docs/REVIEW.md](docs/REVIEW.md)。
