@@ -94,14 +94,26 @@ support = SUPPORT.read_text(encoding='utf-8')
 nav = NAV.read_text(encoding='utf-8')
 backup = BACKUP.read_text(encoding='utf-8')
 
-# 1. The manifest must not advertise a background mode the code never requests.
-check('the manifest declares no backgroundModes (VPN needs none)',
-      '"backgroundModes"' not in manifest)
+# 1. The manifest may only advertise a background mode the code actually
+#    requests: one declared mode that is never started is a permission the
+#    review can question, and one started mode that is not declared fails.
+check('the manifest advertises only the mode the code starts',
+      ('"backgroundModes"' not in manifest)
+      or ('"taskKeeping"' in manifest
+          and 'startBackgroundRunning' in keepalive))
 
-# 2. A continuous task is not available to this kind of app; asking for one
-#    would fail at runtime, so the code must not call it.
-check('no continuous-task call anywhere',
-      'startBackgroundRunning' not in keepalive and 'startBackgroundRunning' not in ability)
+# 2. A continuous task is only legal for the platform's own task types, and the
+#    only one a VPN client may claim is `taskKeeping`, which exists on PC/2-in-1.
+#    So the call must be gated on the desktop and the module must declare it.
+check('the continuous task is gated on the desktop',
+      "deviceType === '2in1'" in keepalive
+      and 'startBackgroundRunning' in body(keepalive, 'holdContinuous'),
+      'taskKeeping is PC-only; asking for it on a phone gets the app suspended')
+check('the long-running mode is declared where the platform reads it',
+      '"backgroundModes"' in manifest and '"taskKeeping"' in manifest)
+check('the continuous task is released on the way back',
+      'stopBackgroundRunning' in body(keepalive, 'releaseContinuous')
+      and 'KeepAlive.releaseContinuous(' in body(ability, 'onForeground'))
 
 # 3. The transient task is requested on the way out and released on the way back.
 check('KeepAlive requests a transient task',
@@ -126,6 +138,17 @@ check('expiry is recorded in the trace',
 check('the grace period is handed back when it ends',
       'cancelSuspendDelay(' in body(keepalive, 'arm'),
       'the callback must cancel the task, not just forget the id')
+# A request made with the daily quota spent is refused with 9900002, which used to
+# be the only trace of the app having no grace at all; the remainder is read first
+# so the trace says which of the two happened.
+check('the remaining quota is read before asking',
+      'getTransientTaskInfo' in body(keepalive, 'remainingQuota')
+      and 'KeepAlive.remainingQuota()' in body(keepalive, 'arm'))
+# A frozen process cannot notice the platform taking the tunnel away, so the first
+# thing a returning window does is start the tunnel that should be up again.
+check('a tunnel that went away is asked for again on return',
+      'resumeDroppedTunnel' in body(ability, 'onForeground')
+      and 'startTunnel(' in body(ability, 'resumeDroppedTunnel'))
 
 # 4. Extension resilience.
 check('the extension watches the network itself',

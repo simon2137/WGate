@@ -58,6 +58,14 @@
         ],
         "minWindowWidth": 360,
         "minWindowHeight": 480,
+        // taskKeeping is the only long-running type a VPN client may claim, and
+        // the platform offers it on PC/2-in-1 only. KeepAlive.holdContinuous()
+        // starts it there while a tunnel is up or an auto-tunnel rule is armed;
+        // phones keep using the transient grace instead, because no background
+        // mode covers a VPN.
+        "backgroundModes": [
+          "taskKeeping"
+        ],
         "skills": [
           {
             "entities": [

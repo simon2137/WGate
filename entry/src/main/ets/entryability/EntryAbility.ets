@@ -13,6 +13,7 @@ import { KeepAlive } from '../service/KeepAlive';
 import { TunnelGuard } from '../service/TunnelGuard';
 import { PcTray } from '../service/PcTray';
 import { toggleTunnel as toggleTunnelCommand } from '../service/TunnelCommands';
+import { startTunnel } from '../service/VpnControl';
 import { withTimeout, isTimeout } from '../util/Async';
 
 const TAG: string = 'WgTunnel';
@@ -289,9 +290,42 @@ export default class EntryAbility extends UIAbility {
     // The window is visible again, so the process does not need the grace
     // period; giving it back keeps the daily quota for the next screen-off.
     KeepAlive.disarm();
+    KeepAlive.releaseContinuous(this.context).catch((err: Error) => {
+      hilog.warn(0x0000, TAG, `continuous task release failed: ${err.message}`);
+    });
+    // A frozen process cannot react to the platform taking the tunnel away, so
+    // the first thing a returning window does is check whether the tunnel that
+    // should be up still is. Without this the user had to press connect again
+    // after the phone had spent its background quota.
+    this.resumeDroppedTunnel();
     Diag.write('app: foreground');
     PcTray.sync(true).catch((err: Error) => {
       hilog.warn(0x0000, TAG, `tray sync failed: ${err.message}`);
+    });
+  }
+
+  /**
+   * Starts the tunnel again when the app comes back and the one that should be
+   * running is not. Only the "wanted but not active" case: an active tunnel is
+   * still owned by the extension and must not be started twice.
+   */
+  private resumeDroppedTunnel(): void {
+    const desired: string = TunnelStore.desiredId();
+    if (desired.length === 0 || TunnelStore.activeId().length > 0) {
+      return;
+    }
+    const tunnel: WgTunnel | null = TunnelStore.find(desired);
+    if (tunnel === null) {
+      TunnelStore.setDesired('');
+      return;
+    }
+    Diag.write(`app: the tunnel was gone while the window was away, asking for ${tunnel.name}`);
+    startTunnel(tunnel).then((problem: string) => {
+      if (problem.length > 0) {
+        Diag.write(`app: the tunnel could not be restored (${problem})`);
+      }
+    }).catch((err: Error) => {
+      hilog.warn(0x0000, TAG, `resume failed: ${err.message}`);
     });
   }
 
@@ -304,8 +338,19 @@ export default class EntryAbility extends UIAbility {
     // platform does and does not allow). A tunnel that is up or wanted is reason
     // enough to ask for that window, whether or not the auto-tunnel rule is on.
     const expecting: boolean = TunnelStore.desiredId().length > 0 || TunnelStore.activeId().length > 0;
-    if (SettingsStore.autoEnabled() || expecting) {
-      KeepAlive.arm();
+    const wanted: boolean = SettingsStore.autoEnabled() || expecting;
+    if (wanted && deviceInfo.deviceType === '2in1') {
+      // The desktop may hold a continuous task, so the tray and the watcher stay
+      // alive instead of being frozen after three minutes.
+      KeepAlive.holdContinuous(this.context).catch((err: Error) => {
+        hilog.warn(0x0000, TAG, `continuous task failed: ${err.message}`);
+      });
+    } else if (wanted) {
+      // The phone can only ask for a transient grace, and arm() reads the daily
+      // quota first so a spent quota is logged as such instead of failing.
+      KeepAlive.arm().catch((err: Error) => {
+        hilog.warn(0x0000, TAG, `keep-alive failed: ${err.message}`);
+      });
     }
     // Recorded so the trace shows when the app left the screen: a tunnel that
     // drops a few minutes later can then be lined up against this stamp instead

@@ -49,3 +49,6 @@ signing/
 *.cer
 *.csr
 *.p7b
+
+# DevEco preview cache (generated, not source)
+.preview/
