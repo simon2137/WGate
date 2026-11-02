@@ -25,18 +25,26 @@
 <main>
   <h1>WGate 隐私政策</h1>
   <p>本应用的隐私政策由华为应用市场的协议服务生成并托管，正在为你打开；如果没有自动跳转，点下面的按钮。</p>
-  <p><a class="open" href="https://agreement-drcn.hispace.dbankcloud.cn/index.html?agreementId=2069872513088805568&amp;lang=zh">打开隐私政策</a></p>
-  <p><code>agreementId=2069872513088805568</code></p>
+  <p><a class="open" id="open" href="https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=2069872513088805568">打开隐私政策</a></p>
+  <p><code id="id">agreementId=2069872513088805568</code></p>
   <p>
-    <a href="https://agreement-drcn.hispace.dbankcloud.cn/index.html?agreementId=2069872513088805568&amp;lang=zh-Hant">繁體中文</a> ·
-    <a href="https://agreement-drcn.hispace.dbankcloud.cn/index.html?agreementId=2069872513088805568&amp;lang=en">English</a>
+    <a href="https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=2069872513088805568">简体中文</a> ·
+    <a href="https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh-Hant-TW&agreementId=2069887177466076864">繁體中文</a> ·
+    <a href="https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=en&agreementId=2069895149739073216">English</a>
   </p>
 </main>
 <script>
+  // Each language is a separate agreement on Huawei's side, with its own id.
+  var AGREEMENTS = {
+    zh: 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=2069872513088805568',
+    hant: 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh-Hant-TW&agreementId=2069887177466076864',
+    en: 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=en&agreementId=2069895149739073216'
+  };
   var tag = navigator.language || 'zh-CN';
-  var lang = /^en/i.test(tag) ? 'en' : (/hant|tw|hk/i.test(tag) ? 'zh-Hant' : 'zh');
-  var target = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html' +
-    '?agreementId=2069872513088805568&lang=' + lang;
+  var key = /^en/i.test(tag) ? 'en' : (/hant|tw|hk/i.test(tag) ? 'hant' : 'zh');
+  var target = AGREEMENTS[key];
+  document.getElementById('open').href = target;
+  document.getElementById('id').textContent = 'agreementId=' + target.split('agreementId=')[1];
   if (location.search.indexOf('stay') < 0) { location.replace(target); }
 </script>
 </body>

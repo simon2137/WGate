@@ -58,10 +58,16 @@
 
 - 没有账号，没有遥测，没有崩溃上报，没有广告 SDK，也没有任何第三方 SDK。
 - 隧道配置（含私钥）、应用设置、启动日志只存在本机的应用私有目录；只有用户主动导出备份或显示二维码时才离开设备。
-- 隐私政策由应用市场的协议服务生成并托管，协议编号 greementId=2069872513088805568：
-  <https://agreement-drcn.hispace.dbankcloud.cn/index.html?agreementId=2069872513088805568&lang=zh>。
-  应用内「设置 → 支持 → 隐私政策」用系统浏览器打开它；AGC 表单里的隐私政策 URL 填
-  <https://simon2137.github.io/WGate/privacy.html>（按浏览器语言跳转到同一份协议）。
+- 隐私政策由应用市场的协议服务生成并托管，**每个语言一份、编号各不相同**：
+  - 简体中文 `agreementId=2069872513088805568`
+    <https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh&agreementId=2069872513088805568>
+  - 繁體中文 `agreementId=2069887177466076864`
+    <https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=zh-Hant-TW&agreementId=2069887177466076864>
+  - English `agreementId=2069895149739073216`
+    <https://agreement-drcn.hispace.dbankcloud.cn/index.html?lang=en&agreementId=2069895149739073216>
+  应用内「设置 → 支持 → 隐私政策」按界面语言选对应编号，用页内 Web 组件直接显示协议全文；
+  AGC 表单里的隐私政策 URL 填 <https://simon2137.github.io/WGate/privacy.html>
+  （按浏览器语言跳到对应语言的协议页）。
 
 ## 六、审核复现步骤
 

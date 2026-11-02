@@ -10,23 +10,26 @@ import { Tr } from '../i18n/Tr';
  * this app — and it is shown here, inside the page, rather than behind a button:
  * a policy a reader has to ask for twice is a policy nobody reads.
  *
- * The `lang` parameter follows the interface language so the agreement arrives
- * in the language the app is being read in. When the document cannot load (no
- * network, for instance) the page says so and offers the browser as a way out
- * instead of leaving an empty sheet.
+ * Each language has its own agreement on Huawei's side, with its own id, so the
+ * language of the interface decides the whole address rather than just the
+ * `lang` parameter. When the document cannot load (no network, for instance) the
+ * page says so and offers the browser as a way out instead of leaving an empty
+ * sheet.
  */
-const AGREEMENT: string = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html' +
-  '?agreementId=2069872513088805568&lang=';
+const AGREEMENT_BASE: string = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html?';
+const AGREEMENT_ZH: string = 'lang=zh&agreementId=2069872513088805568';
+const AGREEMENT_ZH_HANT: string = 'lang=zh-Hant-TW&agreementId=2069887177466076864';
+const AGREEMENT_EN: string = 'lang=en&agreementId=2069895149739073216';
 
 function agreementUrl(): string {
   const locale: string = Tr.locale();
   if (locale === 'en') {
-    return AGREEMENT + 'en';
+    return AGREEMENT_BASE + AGREEMENT_EN;
   }
   if (locale === 'zh_TW' || locale === 'zh_HK') {
-    return AGREEMENT + 'zh-Hant';
+    return AGREEMENT_BASE + AGREEMENT_ZH_HANT;
   }
-  return AGREEMENT + 'zh';
+  return AGREEMENT_BASE + AGREEMENT_ZH;
 }
 
 @Entry
