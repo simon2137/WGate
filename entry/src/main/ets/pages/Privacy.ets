@@ -1,15 +1,19 @@
 import { router } from '@kit.ArkUI';
 import { promptAction } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
-import { Palette, Type, ROW_PAD_H, BAR_SPACE, FONT } from '../theme/Theme';
+import { webview } from '@kit.ArkWeb';
+import { Palette, Type, ROW_PAD_H, FONT } from '../theme/Theme';
 import { Tr } from '../i18n/Tr';
 
 /**
- * The privacy policy is not written here any more: it is hosted by Huawei, the
- * same agreement the store shows for this app, and this page opens it.
+ * The privacy policy is hosted by Huawei — the agreement the store generates for
+ * this app — and it is shown here, inside the page, rather than behind a button:
+ * a policy a reader has to ask for twice is a policy nobody reads.
  *
- * The link is the one below. `lang` follows the interface language, so the
- * agreement opens in the language the user is reading the app in.
+ * The `lang` parameter follows the interface language so the agreement arrives
+ * in the language the app is being read in. When the document cannot load (no
+ * network, for instance) the page says so and offers the browser as a way out
+ * instead of leaving an empty sheet.
  */
 const AGREEMENT: string = 'https://agreement-drcn.hispace.dbankcloud.cn/index.html' +
   '?agreementId=2069872513088805568&lang=';
@@ -30,11 +34,14 @@ function agreementUrl(): string {
 struct Privacy {
   @StorageProp('theme_tick') themeTick: number = 0;
   @StorageProp('safe_top') safeTop: number = 40;
+  @State progress: number = 0;
+  @State failed: boolean = false;
+  private controller: webview.WebviewController = new webview.WebviewController();
 
-  private open(): void {
-    const url: string = agreementUrl();
-    const context: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
-    context.openLink(url).catch(() => {
+  private openInBrowser(): void {
+    const context: common.UIAbilityContext =
+      this.getUIContext().getHostContext() as common.UIAbilityContext;
+    context.openLink(agreementUrl()).catch(() => {
       promptAction.showToast({ message: Tr.t('Could not open a browser'), duration: 2500 });
     });
   }
@@ -75,44 +82,69 @@ struct Privacy {
       .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
       .alignItems(VerticalAlign.Center)
 
-      Scroll() {
+      if (this.failed) {
         Column() {
-          Text(Tr.t('The privacy policy is generated from this app’s details by the app store’s agreement service and hosted there. The button below opens it in your browser.'))
+          Text(Tr.t('Could not load the privacy policy'))
             .fontSize(Type.BODY_MEDIUM)
             .fontFamily(FONT)
             .fontColor(Palette.ON_SURFACE)
-            .width('100%')
-            .padding({ top: 16, bottom: 16 })
-
-          Button(Tr.t('Open the privacy policy'))
-            .width('100%')
-            .height(48)
+            .textAlign(TextAlign.Center)
+          Button(Tr.t('Try again'))
+            .height(44)
             .fontSize(Type.LABEL_MEDIUM)
             .fontFamily(FONT)
             .fontColor(Palette.BACKGROUND)
             .backgroundColor(Palette.PRIMARY)
-            .borderRadius(24)
-            .margin({ top: 8 })
+            .borderRadius(22)
+            .padding({ left: 24, right: 24 })
+            .margin({ top: 16 })
             .onClick(() => {
-              this.open();
+              this.failed = false;
+              this.controller.loadUrl(agreementUrl());
             })
-
-          Text(agreementUrl())
+          Text(Tr.t('Open it in the browser'))
             .fontSize(Type.BODY_SMALL)
             .fontFamily(FONT)
             .fontColor(Palette.MUTED)
-            .width('100%')
-            .padding({ top: 18, bottom: 14 })
-            .textAlign(TextAlign.Center)
-
-          Column().height(BAR_SPACE)
+            .decoration({ type: TextDecorationType.Underline })
+            .margin({ top: 18 })
+            .onClick(() => {
+              this.openInBrowser();
+            })
         }
         .width('100%')
-        .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
+        .layoutWeight(1)
+        .padding({ left: 32, right: 32 })
+        .justifyContent(FlexAlign.Center)
+      } else {
+        Stack({ alignContent: Alignment.Top }) {
+          Web({ src: agreementUrl(), controller: this.controller })
+            .width('100%')
+            .height('100%')
+            .backgroundColor(Palette.BACKGROUND)
+            .darkMode(WebDarkMode.Off)
+            .onProgressChange((event) => {
+              if (event) {
+                this.progress = event.newProgress;
+              }
+            })
+            .onPageEnd(() => {
+              this.failed = false;
+            })
+            .onErrorReceive(() => {
+              this.failed = true;
+            })
+
+          if (this.progress < 100) {
+            Row()
+              .width(`${this.progress}%`)
+              .height(2)
+              .backgroundColor(Palette.PRIMARY)
+          }
+        }
+        .width('100%')
+        .layoutWeight(1)
       }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
     }
     .width('100%')
     .height('100%')

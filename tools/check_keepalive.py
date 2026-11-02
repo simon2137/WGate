@@ -584,9 +584,9 @@ check('the support page drops the upstream rows',
 check('the privacy policy is a page in the app',
       'pages/Privacy' in pages['src'] and PRIVACY.exists()
       and "router.pushUrl({ url: 'pages/Privacy' })" in support)
-check('the privacy page opens the hosted agreement',
+check('the privacy page shows the hosted agreement in place',
       'agreementId=2069872513088805568' in privacy
-      and 'context.openLink(url)' in privacy
+      and 'Web({ src: agreementUrl()' in privacy
       and 'PARAGRAPHS' not in privacy)
 check('a fresh install opens on Simplified Chinese',
       "SettingsStore.get('language', 'zh_CN')" in store)

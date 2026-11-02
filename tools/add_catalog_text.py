@@ -480,6 +480,18 @@ AUTHORED: dict[str, dict[str, str]] = {
         'zh_CN': '打开隐私政策',
         'zh_TW': '開啟隱私權政策',
     },
+    'Could not load the privacy policy': {
+        'zh_CN': '隐私政策加载失败',
+        'zh_TW': '隱私權政策載入失敗',
+    },
+    'Try again': {
+        'zh_CN': '重试',
+        'zh_TW': '重試',
+    },
+    'Open it in the browser': {
+        'zh_CN': '用浏览器打开',
+        'zh_TW': '用瀏覽器開啟',
+    },
     'Could not open a browser': {
         'zh_CN': '无法打开浏览器',
         'zh_TW': '無法開啟瀏覽器',
