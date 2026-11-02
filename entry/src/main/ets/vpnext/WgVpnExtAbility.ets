@@ -108,7 +108,7 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
       const e = err as BusinessError;
       hilog.error(DOMAIN, TAG, `connect failed: ${e.code} ${e.message}`);
       Diag.write(`connect threw: ${e.code} ${e.message}`);
-      TunnelStore.setLastError(`VPN startup failed (${e.code}): ${e.message}`);
+      TunnelStore.setLastError(`WireGuard startup failed (${e.code}): ${e.message}`);
       this.shutdown();
     }
   }
@@ -142,7 +142,7 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
 
   onDestroy(): void {
     hilog.info(DOMAIN, TAG, 'onDestroy');
-    Diag.write('extension onDestroy (the system tore the VPN down)');
+    Diag.write('extension onDestroy (the system tore the tunnel down)');
     this.shutdown();
   }
 
@@ -621,7 +621,7 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
               this.connect(want);
             }
           }).catch(() => {
-            TunnelStore.setLastError('A previous VPN session could not be released');
+            TunnelStore.setLastError('A previous WireGuard session could not be released');
             this.shutdown();
           });
         } else {
@@ -629,7 +629,7 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
         }
         return;
       }
-      TunnelStore.setLastError(`VPN creation failed (${err.code}): ${err.message}`);
+      TunnelStore.setLastError(`WireGuard creation failed (${err.code}): ${err.message}`);
       this.shutdown();
     });
   }

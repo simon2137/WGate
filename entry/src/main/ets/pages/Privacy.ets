@@ -15,7 +15,7 @@ const PARAGRAPHS: string[] = [
   Tr.t('No accounts, no telemetry, no analytics. This app runs no server of its own and does not upload your configuration anywhere.'),
   Tr.t('Tunnel configurations, private keys included, are stored in the app’s private preferences on this device. They leave it only when you export a backup or show a QR code, and both of those are things you start.'),
   Tr.t('The startup trace under Local logging stays in the app’s private files. It records state changes and errors, not packet contents, and you can clear it or export it at any time.'),
-  Tr.t('The permissions are the ones the app is named for: INTERNET and the VPN extension for tunnel traffic, GET_NETWORK_INFO and GET_WIFI_INFO to tell Wi-Fi from mobile data, CAMERA only while you scan a configuration. Nothing else is requested.'),
+  Tr.t('The permissions are the ones the app is named for: INTERNET and the WireGuard extension for tunnel traffic, GET_NETWORK_INFO and GET_WIFI_INFO to tell Wi-Fi from mobile data, CAMERA only while you scan a configuration. Nothing else is requested.'),
   Tr.t('No advertising SDK, crash reporter or tracker is linked into this build. The only traffic the app generates is the tunnel itself.'),
   Tr.t('Uninstalling the app removes the stored tunnels, the settings and the trace with it. There is no copy anywhere else.')
 ];

@@ -721,6 +721,23 @@ check('the latency probe runs in a worker, not on the UI thread',
 check('sorting by latency cannot be started twice at once',
       '@State probing: boolean' in tunnels_view and 'if (this.probing)' in tunnels_view)
 
+# 23. Nothing the interface draws may name the protocol stack: the app talks about
+#     WireGuard. The word "VPN" stays in the source comments that explain the
+#     platform (the VPN extension, the VPN framework), never in a label.
+catalogue_text = (ROOT / 'entry/src/main/ets/i18n/Catalog.ets').read_text(encoding='utf-8')
+check('the translation table never says VPN',
+      not [row for row in catalogue_text.split('\u0001') if 'VPN' in row])
+visible = []
+for path in sorted(ROOT.glob('entry/src/main/ets/**/*.ets')):
+    if path.name == 'Catalog.ets':
+        continue
+    for line in path.read_text(encoding='utf-8').split('\n'):
+        stripped = line.strip()
+        if 'VPN' not in stripped or stripped.startswith(('//', '*', '/*')):
+            continue
+        visible.append(f'{path.name}: {stripped[:60]}')
+check('no label or message says VPN', not visible, '; '.join(visible[:3]))
+
 if failures:
     print('keep-alive audit:')
     for item in failures:

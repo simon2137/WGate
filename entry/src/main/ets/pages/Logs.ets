@@ -126,7 +126,7 @@ struct Logs {
             .maxLines(1)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
             .width('100%')
-          Text(Tr.t('What the app and the VPN extension recorded'))
+          Text(Tr.t('What the WireGuard extension recorded'))
             .fontSize(Type.BODY_SMALL)
             .fontFamily(FONT)
             .fontColor(Palette.MUTED)
@@ -171,7 +171,7 @@ struct Logs {
 
       Scroll() {
         Column() {
-          SectionHeader({ label: Tr.t('VPN startup trace') })
+          SectionHeader({ label: Tr.t('WireGuard startup trace') })
           Column() {
             Text(this.empty ? Tr.t('Nothing has been recorded yet') : this.trace)
               .fontSize(12)

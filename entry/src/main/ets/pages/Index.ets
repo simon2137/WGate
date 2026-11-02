@@ -448,7 +448,7 @@ struct Index {
       Diag.write(`startVpnExtensionAbility failed: ${e.code} ${e.message}`);
       TunnelStore.setDesired('');
       this.lastError = isTimeout(e) ?
-        'The system did not confirm the VPN request' : `Could not start the VPN (${e.code})`;
+        'The system did not confirm the WireGuard request' : `Could not start WireGuard (${e.code})`;
       TunnelStore.setLastError(this.lastError);
       this.flash(this.lastError);
     } finally {
@@ -484,7 +484,7 @@ struct Index {
       if (text.indexOf('extension onCreate') < 0) {
         // The system accepted the request but the service never reported in, so
         // nothing in this process knows why it stopped.
-        this.lastError = 'The VPN service did not start. Open Logs for the startup trace.';
+        this.lastError = 'The WireGuard service did not start. Open Logs for the startup trace.';
         this.flash(this.lastError);
       }
     }, 6000);
@@ -1747,7 +1747,7 @@ struct Index {
 
       if (this.diagText.length > 0) {
         Row() {
-          Text(Tr.t('VPN startup trace')).fontSize(12).fontColor('#8FA3B8').layoutWeight(1)
+          Text(Tr.t('WireGuard startup trace')).fontSize(12).fontColor('#8FA3B8').layoutWeight(1)
           Button(Tr.t('Clear'))
             .fontSize(11)
             .fontColor('#8FA3B8')

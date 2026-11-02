@@ -183,9 +183,9 @@ AUTHORED: dict[str, dict[str, str]] = {
         'zh_TW': '已斷開 %1$s',
     },
     # The log page: one flat trace, exported to a file and cleared in place.
-    'What the app and the VPN extension recorded': {
-        'zh_CN': '应用和 VPN 扩展记录的内容',
-        'zh_TW': '應用和 VPN 擴充功能記錄的內容',
+    'What the WireGuard extension recorded': {
+        'zh_CN': 'WireGuard扩展记录的内容',
+        'zh_TW': 'WireGuard擴充功能記錄的內容',
     },
     'Nothing has been recorded yet': {
         'zh_CN': '还没有任何记录',
@@ -253,9 +253,9 @@ AUTHORED: dict[str, dict[str, str]] = {
         'zh_CN': '“本地日志监控器”里的启动记录只保存在应用私有文件中。它记录状态变化和错误，不记录数据包内容，您可以随时清空或导出。',
         'zh_TW': '「本機日誌監控器」中的啟動記錄只儲存在應用程式私有檔案中。它記錄狀態變化和錯誤，不記錄封包內容，您可以隨時清除或匯出。',
     },
-    'The permissions are the ones the app is named for: INTERNET and the VPN extension for tunnel traffic, GET_NETWORK_INFO and GET_WIFI_INFO to tell Wi-Fi from mobile data, CAMERA only while you scan a configuration. Nothing else is requested.': {
-        'zh_CN': '申请的权限只有应用本身需要的那几项：INTERNET 和 VPN 扩展用于隧道流量，GET_NETWORK_INFO 和 GET_WIFI_INFO 用于区分 Wi-Fi 与移动数据，CAMERA 只在进行扫码时使用。没有其它权限。',
-        'zh_TW': '申請的權限只有應用程式本身需要的那幾項：INTERNET 和 VPN 擴充功能用於通道流量，GET_NETWORK_INFO 和 GET_WIFI_INFO 用於區分 Wi-Fi 與行動數據，CAMERA 只會在掃描設定時使用。沒有其它權限。',
+    'The permissions are the ones the app is named for: INTERNET and the WireGuard extension for tunnel traffic, GET_NETWORK_INFO and GET_WIFI_INFO to tell Wi-Fi from mobile data, CAMERA only while you scan a configuration. Nothing else is requested.': {
+        'zh_CN': '申请的权限只有应用本身需要的那几项：INTERNET 和 WireGuard 扩展用于隧道流量，GET_NETWORK_INFO 和 GET_WIFI_INFO 用于区分 Wi-Fi 与移动数据，CAMERA 只在进行扫码时使用。没有其它权限。',
+        'zh_TW': '申請的權限只有應用程式本身需要的那幾項：INTERNET 和 WireGuard 擴充功能用於通道流量，GET_NETWORK_INFO 和 GET_WIFI_INFO 用於區分 Wi-Fi 與行動數據，CAMERA 只會在掃描設定時使用。沒有其它權限。',
     },
     'No advertising SDK, crash reporter or tracker is linked into this build. The only traffic the app generates is the tunnel itself.': {
         'zh_CN': '本次构建没有链接任何广告 SDK、崩溃上报或追踪组件。应用产生的唯一流量就是隧道本身。',

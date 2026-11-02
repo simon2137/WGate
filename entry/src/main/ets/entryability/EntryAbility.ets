@@ -114,7 +114,7 @@ export default class EntryAbility extends UIAbility {
       .catch((err: BusinessError) => {
         hilog.error(0x0000, TAG, `import connect failed: ${err.code} ${err.message}`);
         TunnelStore.setLastError(isTimeout(err) ?
-          'The system did not confirm the VPN request' : `Could not start the VPN (${err.code})`);
+          'The system did not confirm the WireGuard request' : `Could not start WireGuard (${err.code})`);
       });
   }
 

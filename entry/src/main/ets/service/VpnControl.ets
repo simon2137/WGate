@@ -40,7 +40,7 @@ export async function startTunnel(tunnel: WgTunnel): Promise<string> {
     Diag.write(`startVpnExtensionAbility failed: ${e.code} ${e.message}`);
     TunnelStore.setDesired('');
     const message: string = isTimeout(e) ?
-      'The system did not confirm the VPN request' : `Could not start the VPN (${e.code})`;
+      'The system did not confirm the WireGuard request' : `Could not start WireGuard (${e.code})`;
     TunnelStore.setLastError(message);
     return message;
   }
@@ -75,7 +75,7 @@ export function startupProblem(): string {
     }
   }
   if (text.indexOf('extension onCreate') < 0) {
-    return 'The VPN service did not start. Open Logs for the startup trace.';
+    return 'The WireGuard service did not start. Open Logs for the startup trace.';
   }
   return '';
 }
