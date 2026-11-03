@@ -291,7 +291,7 @@ export class AutoTunnel {
     if (AutoTunnel.autoStarted.length > 0 && running === AutoTunnel.autoStarted) {
       const started: WgTunnel | null = AutoTunnel.byId(AutoTunnel.autoStarted);
       if (started !== null) {
-        await stopTunnel(started);
+        await stopTunnel(started, 'the network is not trusted any more');
         Diag.write(`auto-tunnel: stopped ${started.name}, "${ssid}" is not trusted`);
       }
     }
@@ -368,7 +368,7 @@ export class AutoTunnel {
       return;
     }
     const mine: boolean = id === AutoTunnel.autoStarted;
-    stopTunnel(tunnel).then(() => {
+    stopTunnel(tunnel, 'the auto-tunnel changed its mind').then(() => {
       AutoTunnel.autoStarted = '';
       Diag.write(`auto-tunnel: stopped ${tunnel.name}, the device has no network` +
         ` (${mine ? 'started by auto-tunnel' : 'started by hand'})`);

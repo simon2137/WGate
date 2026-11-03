@@ -40,6 +40,7 @@ export default class EntryAbility extends UIAbility {
 
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, TAG, 'EntryAbility onCreate');
+    Diag.write(`app: created for ${want.action === undefined ? 'no action' : want.action}`);
     TunnelStore.init(this.context);
     Diag.init(this.context);
     // Watches the published snapshot and rebuilds a tunnel the system took away
@@ -54,6 +55,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+    Diag.write(`app: a new want, action ${want.action === undefined ? 'none' : want.action}`);
     // The window may be minimised (the tray put it aside) or behind other
     // windows; starting the ability again is a request to look at it.
     this.raiseWindow();

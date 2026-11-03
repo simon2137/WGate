@@ -11,6 +11,8 @@
  */
 import { notificationManager } from '@kit.NotificationKit';
 import { wantAgent, WantAgent } from '@kit.AbilityKit';
+import { Diag } from '../util/Diag';
+import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 
 const DOMAIN: number = 0x0001;
@@ -49,7 +51,9 @@ export class Notifier {
   }
 
   static async update(title: string, text: string): Promise<void> {
-    if (title === Notifier.lastTitle && text === Notifier.lastText) {
+    // "Unchanged" only matters while the notice is actually on the bar: a tap
+    // deletes it, and the payload of a running tunnel stops changing.
+    if (title === Notifier.lastTitle && text === Notifier.lastText && await Notifier.onTheBar()) {
       return;
     }
     Notifier.lastTitle = title;
@@ -73,6 +77,27 @@ export class Notifier {
       });
     } catch (err) {
       hilog.warn(DOMAIN, TAG, `publish failed: ${JSON.stringify(err)}`);
+      Diag.write(`notice: publish failed (${(err as BusinessError).code})`);
+    }
+  }
+
+  /**
+   * Whether this app still has the tunnel notice up. A system that refuses the
+   * list is treated as "yes": republishing on every tick would work, but there is
+   * no reason to when the answer is unknown.
+   */
+  private static async onTheBar(): Promise<boolean> {
+    try {
+      const live: notificationManager.NotificationRequest[] =
+        await notificationManager.getActiveNotifications();
+      for (let i = 0; i < live.length; i++) {
+        if (live[i].id === TUNNEL_NOTIFICATION_ID) {
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      return true;
     }
   }
 
@@ -83,6 +108,7 @@ export class Notifier {
       await notificationManager.cancel(TUNNEL_NOTIFICATION_ID);
     } catch (err) {
       hilog.warn(DOMAIN, TAG, `cancel failed: ${JSON.stringify(err)}`);
+      Diag.write(`notice: cancel failed (${(err as BusinessError).code})`);
     }
   }
 }

@@ -25,7 +25,7 @@ export function toggleTunnel(source: string): void {
   }
   if (activeId.length > 0) {
     Diag.write(`${source}: asked to disconnect ${tunnel.name}`);
-    stopTunnel(tunnel);
+    stopTunnel(tunnel, 'the quick action asked for it');
   } else {
     Diag.write(`${source}: asked to connect ${tunnel.name}`);
     startTunnel(tunnel);

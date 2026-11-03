@@ -338,7 +338,7 @@ struct Home {
 
   private async removeTunnel(tunnel: WgTunnel): Promise<void> {
     if (this.activeId === tunnel.id) {
-      await stopTunnel(tunnel);
+      await stopTunnel(tunnel, 'the tunnel was removed');
       this.activeId = '';
     }
     TunnelStore.remove(tunnel.id);
@@ -513,7 +513,7 @@ struct Home {
       return;
     }
     if (this.activeId === tunnel.id) {
-      await stopTunnel(tunnel);
+      await stopTunnel(tunnel, 'the switch in settings was turned off');
       this.activeId = '';
     } else {
       const problem: string = await startTunnel(tunnel);

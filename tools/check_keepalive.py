@@ -665,7 +665,7 @@ notice = (ROOT / 'entry/src/main/ets/service/TunnelNotice.ets').read_text(encodi
 check('the tunnel notification only alerts once',
       'isAlertOnce: true' in notifier
       and 'isOngoing: true' in notifier
-      and 'if (title === Notifier.lastTitle && text === Notifier.lastText)' in notifier)
+      and 'title === Notifier.lastTitle && text === Notifier.lastText' in notifier)
 check('the transfer counters in the shade move in steps',
       'private static step(bytes: number): number' in notice
       and 'formatBytes(TunnelNotice.step(rxBytes))' in notice)

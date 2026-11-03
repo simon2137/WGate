@@ -383,7 +383,7 @@ export struct TunnelsView {
         }, 6000);
       }
     } else {
-      await stopTunnel(tunnel);
+      await stopTunnel(tunnel, 'the switch in the list was turned off');
       this.activeId = '';
       this.graceUntil = 0;
       this.connectedAt = 0;

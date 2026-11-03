@@ -46,7 +46,10 @@ export async function startTunnel(tunnel: WgTunnel): Promise<string> {
   }
 }
 
-export async function stopTunnel(tunnel: WgTunnel): Promise<void> {
+export async function stopTunnel(tunnel: WgTunnel, reason: string): Promise<void> {
+  // The reason is for the trace: when a tunnel disappears on its own, the first
+  // question is always which piece of the app asked for it.
+  Diag.write(`stop requested (${reason}): ${tunnel.name}`);
   TunnelStore.setDesired('');
   try {
     await withTimeout(vpnExtension.stopVpnExtensionAbility(want(tunnel)), STOP_TIMEOUT_MS, 'stop');
