@@ -368,7 +368,15 @@ check('the shade text comes from the switches',
 check('the old hardcoded sentences are gone',
       'Connected · ' not in index and 'Establishing the tunnel…' not in index)
 check('the extension takes the shade down with the tunnel',
-      'TunnelNotice.clear()' in body(extension, 'shutdown'))
+      "TunnelNotice.clear('the extension shut down')" in body(extension, 'shutdown'))
+# Asking the system for a tunnel that is already up restarts the extension, and
+# the restart takes the notification down. The cached active id cannot tell, so
+# the published snapshot has to.
+check('a returning window trusts the published tunnel, not the cached id',
+      'publishedTunnelId()' in body(ability, 'resumeDroppedTunnel'))
+check('the notification says why it was taken down',
+      all(f'TunnelNotice.clear({reason}' in index or f'TunnelNotice.clear({reason}' in extension
+          for reason in ["'no tunnel is running'", "'the tunnel reported idle for 15 seconds'"]))
 # The platform cannot tint a notification (`notificationRequest.color` is
 # documented as "Not supported currently"), so the failure state is a glyph.
 check('the failure mark is a glyph, not a colour',

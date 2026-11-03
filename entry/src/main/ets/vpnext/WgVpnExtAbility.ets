@@ -435,7 +435,7 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
     Diag.write('extension shut down');
     // The shade belongs to this process while the tunnel exists; take it down
     // with the tunnel instead of leaving a stale "Connected" behind.
-    TunnelNotice.clear();
+    TunnelNotice.clear('the extension shut down');
     if (this.watchdog >= 0) {
       clearInterval(this.watchdog);
       this.watchdog = -1;

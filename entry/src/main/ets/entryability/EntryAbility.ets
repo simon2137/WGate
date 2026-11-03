@@ -9,6 +9,7 @@ import { TunnelStore } from '../service/TunnelStore';
 import { SettingsStore } from '../service/SettingsStore';
 import { schemeFor, resolveTheme } from '../theme/Theme';
 import { Diag } from '../util/Diag';
+import { publishedTunnelId } from '../service/EngineStatus';
 import { KeepAlive } from '../service/KeepAlive';
 import { TunnelGuard } from '../service/TunnelGuard';
 import { PcTray } from '../service/PcTray';
@@ -298,7 +299,11 @@ export default class EntryAbility extends UIAbility {
     // should be up still is. Without this the user had to press connect again
     // after the phone had spent its background quota.
     this.resumeDroppedTunnel();
-    Diag.write('app: foreground');
+    // Which tunnel the extension says it is running, next to the id this process
+    // has cached: when a "the notification disappeared" report arrives, these two
+    // are what say whether the app asked for the tunnel again or left it alone.
+    const alive: string = publishedTunnelId();
+    Diag.write(`app: foreground, published tunnel ${alive.length > 0 ? alive : 'none'}`);
     PcTray.sync(true).catch((err: Error) => {
       hilog.warn(0x0000, TAG, `tray sync failed: ${err.message}`);
     });
@@ -311,7 +316,16 @@ export default class EntryAbility extends UIAbility {
    */
   private resumeDroppedTunnel(): void {
     const desired: string = TunnelStore.desiredId();
-    if (desired.length === 0 || TunnelStore.activeId().length > 0) {
+    if (desired.length === 0) {
+      return;
+    }
+    // `preferences` caches per process, so this copy of the active id can be
+    // empty while the extension is running the tunnel quite happily. Asking for
+    // it again on that basis restarted a live session, and the restart took the
+    // notification down with it: the published snapshot is the only
+    // cross-process truth, so it decides.
+    const published: string = publishedTunnelId();
+    if (published.length > 0 || TunnelStore.activeId().length > 0) {
       return;
     }
     const tunnel: WgTunnel | null = TunnelStore.find(desired);

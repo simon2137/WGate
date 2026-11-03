@@ -18,6 +18,7 @@ import { SettingsStore } from './SettingsStore';
 import { Notifier } from './Notifier';
 import { WgTunnel } from '../model/Tunnel';
 import { BridgeStatus } from '../util/StatusBridge';
+import { Diag } from '../util/Diag';
 import { formatBytes, duration } from './EngineStatus';
 import { Tr } from '../i18n/Tr';
 
@@ -142,7 +143,7 @@ export class TunnelNotice {
   /** Publishes at most one update per distinct text; null means "take it away". */
   static async show(notice: TunnelNoticeText | null): Promise<void> {
     if (notice === null) {
-      await TunnelNotice.clear();
+      await TunnelNotice.clear('nothing to say');
       return;
     }
     if (notice.key === TunnelNotice.lastKey) {
@@ -152,7 +153,13 @@ export class TunnelNotice {
     await Notifier.update(notice.title, notice.text);
   }
 
-  static async clear(): Promise<void> {
+  /**
+   * `reason` is written to the diagnostic trace: "the notification vanished" is
+   * the kind of report that cannot be argued with, only measured, and without
+   * this line the log cannot say whether the app took it down or the system did.
+   */
+  static async clear(reason: string): Promise<void> {
+    Diag.write(`notice: cleared (${reason})`);
     if (TunnelNotice.lastKey.length === 0) {
       return;
     }
