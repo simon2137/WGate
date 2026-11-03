@@ -11,12 +11,15 @@
 import { fileIo } from '@kit.CoreFileKit';
 import { common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
+import { util } from '@kit.ArkTS';
 
 const DOMAIN: number = 0x0001;
 const TAG: string = 'Diag';
 const FILE_NAME: string = 'vpn_diag.log';
 /** Keeps the trace readable in a sheet and bounded on disk. */
 const MAX_CHARS: number = 8000;
+/** Marks a trace written after the UTF-8 fix; older files lack it. */
+const FORMAT: string = 'trace v2';
 
 export class Diag {
   private static dir: string = '';
@@ -24,7 +27,23 @@ export class Diag {
   static init(context: common.Context): void {
     if (Diag.dir.length === 0) {
       Diag.dir = context.filesDir;
+      Diag.migrate();
     }
+  }
+
+  /**
+   * Drops a trace written before the file was decoded as UTF-8: those lines
+   * were re-encoded on every append, so they can never read correctly again.
+   */
+  private static migrate(): void {
+    const text = Diag.read();
+    if (text.includes(FORMAT)) {
+      return;
+    }
+    if (text.length > 0) {
+      Diag.clear();
+    }
+    Diag.write(FORMAT);
   }
 
   /** Sandbox directory shared by both processes; '' until init() ran. */
@@ -93,10 +112,13 @@ export class Diag {
 }
 
 function buffer2text(buffer: ArrayBuffer, length: number): string {
+  // The file is UTF-8. Decoding it byte by byte and writing the result back
+  // re-encoded every non-ASCII byte again on each append, which is how a
+  // Chinese tunnel name turned the whole trace into mojibake.
   const view = new Uint8Array(buffer, 0, length);
-  let out: string = '';
-  for (let i = 0; i < length; i++) {
-    out += String.fromCharCode(view[i]);
+  try {
+    return util.TextDecoder.create('utf-8').decodeToString(view);
+  } catch (err) {
+    return '';
   }
-  return out;
 }

@@ -136,6 +136,14 @@ struct Logs {
         }
         .alignItems(HorizontalAlign.Start)
         .layoutWeight(1)
+      }
+      .width('100%')
+      .height(64)
+      .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
+      .alignItems(VerticalAlign.Center)
+
+      Row() {
+        Blank()
         Text(Tr.t('Refresh'))
           .fontSize(Type.BODY_SMALL)
           .fontFamily(FONT)
@@ -165,9 +173,8 @@ struct Logs {
           })
       }
       .width('100%')
-      .height(64)
-      .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
-      .alignItems(VerticalAlign.Center)
+      .padding({ left: ROW_PAD_H, right: ROW_PAD_H, bottom: 4 })
+      .justifyContent(FlexAlign.End)
 
       Scroll() {
         Column() {
