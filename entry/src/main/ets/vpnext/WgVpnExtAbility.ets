@@ -142,7 +142,9 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
 
   onDestroy(): void {
     hilog.info(DOMAIN, TAG, 'onDestroy');
-    Diag.write('extension onDestroy (the system tore the tunnel down)');
+    // Deliberately neutral: this line used to blame the system, but a second
+    // start request from the window looks exactly the same from in here.
+    Diag.write('extension onDestroy');
     this.shutdown();
   }
 
