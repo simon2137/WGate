@@ -384,6 +384,7 @@ struct Index {
       if (this.idleTicks >= 15 && this.activeId.length > 0) {
         this.activeId = '';
         TunnelStore.setActive('');
+        Diag.write('notice: taken down, the tunnel reported idle for 15 seconds');
         TunnelNotice.clear();
       }
     } else {
@@ -410,6 +411,7 @@ struct Index {
       status.state !== 'error';
     if (this.activeId.length === 0) {
       if (!running) {
+        Diag.write('notice: taken down, no tunnel is running');
         TunnelNotice.clear();
       }
       return;
