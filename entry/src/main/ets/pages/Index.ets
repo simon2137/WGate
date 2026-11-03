@@ -276,6 +276,13 @@ struct Index {
 
   /** The scanner page saves tunnels directly, so the list is rebuilt on return. */
   onPageShow(): void {
+    // Coming back from the shade is the case that matters most: the tunnel may
+    // have been started, stopped or replaced while this page was away, and the
+    // notification must follow what is actually running, not what this process
+    // last remembered.
+    this.activeId = TunnelStore.activeId();
+    this.adoptPublishedActive();
+    this.pollEngine();
     if (this.tunnels.length === 0 || this.sheetKind === SHEET_NONE) {
       this.refresh();
     }
@@ -392,8 +399,19 @@ struct Index {
    * extension did not, and takes the notification down when no tunnel is left.
    */
   private updateNotification(status: EngineStatus): void {
+    // This process caches the store, so the id the extension wrote while the
+    // window was away can still be missing here. Adopt it before deciding that
+    // there is no tunnel -- otherwise coming back from the shade takes the
+    // notification down while the tunnel keeps running.
     if (this.activeId.length === 0) {
-      TunnelNotice.clear();
+      this.adoptPublishedActive();
+    }
+    const running: boolean = status.state !== 'stopped' && status.state !== 'idle' &&
+      status.state !== 'error';
+    if (this.activeId.length === 0) {
+      if (!running) {
+        TunnelNotice.clear();
+      }
       return;
     }
     if (status.notified) {
