@@ -13,6 +13,7 @@ The captures themselves live in build/store/<device>-<frame>.jpeg (zh) and
 <device>-{en,hant}-<nn>.jpeg (the other two languages).
 """
 
+import json
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -21,8 +22,18 @@ ROOT = Path(__file__).resolve().parent.parent
 STORE = ROOT / 'build/store'
 OUT = ROOT / 'signing/agc-assets/screenshots'
 
-# the 16:9 region inside the 2in1 window (left, top, right, bottom), device pixels
+# the 16:9 region inside the 2in1 window (left, top, right, bottom), device
+# pixels; `tools/capture_store_shots.py` measures it and leaves it in
+# build/store/geometry.json, and this is the shape the last set was cut from.
 PC_BOX = (523, 287, 2890, 1618)
+
+
+def pc_box() -> tuple:
+    path = STORE / 'geometry.json'
+    if not path.exists():
+        return PC_BOX
+    measured = json.loads(path.read_text(encoding='utf-8')).get('pc')
+    return tuple(measured) if measured else PC_BOX
 
 PHONE = (1080, 1920)
 TABLET = (1920, 1280)
@@ -67,9 +78,16 @@ def fill(image: Image.Image, size: tuple) -> Image.Image:
 
 
 def main() -> None:
+    import argparse
+    parser = argparse.ArgumentParser(description='Assemble the store screenshots.')
+    parser.add_argument('--device', choices=['phone', 'tablet', 'pc'], action='append',
+                        help='assemble one device only (default: all three)')
+    args = parser.parse_args()
+    devices = args.device or ['phone', 'tablet', 'pc']
+
     for lang in LANGS:
         rows = []
-        for device in ('phone', 'tablet', 'pc'):
+        for device in devices:
             folder = OUT / lang / device
             folder.mkdir(parents=True, exist_ok=True)
             frames = []
@@ -79,7 +97,7 @@ def main() -> None:
                     raise SystemExit(f'missing capture: {path}')
                 image = Image.open(path).convert('RGB')
                 if device == 'pc':
-                    out = image.crop(PC_BOX).resize(PC, Image.LANCZOS)
+                    out = image.crop(pc_box()).resize(PC, Image.LANCZOS)
                 elif device == 'tablet':
                     out = image.resize(TABLET, Image.LANCZOS)
                 else:

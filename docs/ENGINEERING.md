@@ -460,6 +460,16 @@ The HAP is written to `entry/build/default/outputs/default/entry-default-unsigne
 Configure a signing profile in DevEco Studio before installing on a device —
 `VpnExtensionAbility` and the `vpn` extension type require a real signature.
 
+The listing screenshots are produced rather than cut by hand:
+`python tools/capture_store_shots.py` drives a connected tablet and 2-in-1 through
+the five frames in each of the three languages and leaves the captures, and the
+window rectangle it measured, in `build/store/`; `python tools/make_store_shots.py`
+then cuts them to the shapes AppGallery asks for (1920×1280 on a tablet, 1920×1080
+on a 2-in-1) under `signing/agc-assets/screenshots/`. Re-run both after a change
+that shows on a wide window — the bottom bar's length, for one — and give the
+2-in-1 window a 16:9 shape first, since that is what the 1920×1080 frame is a crop
+of. The phone set is not affected by the bar.
+
 ### Permissions
 
 Only `normal` level permissions are requested: `INTERNET`, `GET_NETWORK_INFO`,
