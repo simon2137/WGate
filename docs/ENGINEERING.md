@@ -166,13 +166,19 @@ visible in both themes. `isImmersiveMaterialSupported()`, `getMaterialInfo().sta
 and the material level are written to the diagnostic trace on every launch, which is
 how the effect was confirmed here (`nav: immersive supported=true state=0 level=0`).
 
-The pill is as wide as it is on a phone: 74 % of the window, capped at 280 vp
-(`NAV_BAR_MAX` in the same file). 74 % of a 360 vp phone is 266 vp, a pill 4.75
-times as long as it is tall; the same percentage of a tablet or a 2-in-1 window
+On a phone the pill is 74 % of the window: 266 vp of 360, a pill 4.75 times as
+long as it is tall. Keeping that percentage on a tablet or a 2-in-1 window
 stretched the bar to three or four times that length, with the four tabs strung
-out along it, and the glass read as a bar glued to the edge again. The cap is
-applied to the capsule and to the highlight `Home` paints over it from the one
-constant, so the two stay overlaid at every window size.
+out along it and the glass reading as a bar glued to the edge again; holding the
+length at the phone's number instead left a stub in the middle of the window. The
+length is therefore a function of the window: `navWidth(windowVp)` in
+`components/BottomNav.ets` returns the phone's length until the window is wide
+enough for 28 % of it to be longer than that (about 950 vp) and follows that share
+from there — the proportion the reference 2-in-1 floats, where the pill spans
+about 28 % of the window. `Home` measures the window with `getLastWindow` and
+`windowSizeChange`, so a resized 2-in-1 window or a foldable that unfolds mid-session
+gets the new length, and passes the result to the capsule *and* to the highlight it
+paints over it, so the two stay overlaid at every size.
 
 The moving light is drawn outside the capsule. The platform's `lightEffect` (the
 `immersive light` feedback) only shows on hardware that composites the material
@@ -468,7 +474,11 @@ then cuts them to the shapes AppGallery asks for (1920×1280 on a tablet, 1920×
 on a 2-in-1) under `signing/agc-assets/screenshots/`. Re-run both after a change
 that shows on a wide window — the bottom bar's length, for one — and give the
 2-in-1 window a 16:9 shape first, since that is what the 1920×1080 frame is a crop
-of. The phone set is not affected by the bar.
+of. The window manager ignores a scripted drag (a border resize needs a hover,
+which `uitest uiInput` cannot inject), so on an emulator the shape comes from a
+temporary `win.resize(2478, 1394)` after `configureWindow(win)` in
+`EntryAbility.onWindowStageCreate`, reverted once the frames are taken. The phone
+set is not affected by the bar.
 
 ### Permissions
 
@@ -1183,7 +1193,7 @@ pwsh -File tools/run_host_tests.ps1
 | `tools/keepalive_probe.c` | an idle tunnel on a host whose clock is past 180 s: a persistent keepalive from the handshake on, with no data packet first, and the socket retry loop after a name stops resolving | keepalive on an idle session, retries re-armed |
 | `tools/recycle_probe.c` | a socket recycle whose re-resolve fails after a healthy socket existed: the fd is released so `engine_tick()` retries instead of leaving an unresolved tunnel with a live-looking socket | failed recycle releases the fd, retries continue |
 | `tools/jsontest.cpp` | the base64/flat-JSON configuration bridge that `open()` relies on, including the `peerCount` / `peerN<Field>` hand-off | 33 checks, 0 failures |
-| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, that connecting asks for the notification permission while a refusal is never reported as a failed start, and that `automatic` follows a system appearance change while the app runs instead of at the next restart, and that the bottom bar keeps the phone's length on a wide window | 169 checks, 0 failures |
+| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, that connecting asks for the notification permission while a refusal is never reported as a failed start, and that `automatic` follows a system appearance change while the app runs instead of at the next restart, and that the bottom bar keeps its shape on a tablet or a 2-in-1 window and follows the window as it is resized | 170 checks, 0 failures |
 
 Screens checked on the emulator after the last build:
 

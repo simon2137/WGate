@@ -8,26 +8,35 @@ const NAV_RADIUS: number = 28;
 const GLOW_STEP: number = 2;
 /** Gap between the screen edge and the floating capsule on each side. */
 const NAV_EDGE_GAP: number = 16;
+/** Share of a narrow window the capsule spans, leaving 13 % free on each side. */
+const NAV_PHONE_SHARE: number = 0.74;
 /**
- * Capsule width: the reference app floats a pill that is narrower than the
- * screen (about 74%), so `100%` + margins would add the margins outside a
- * full-width node and push it past both screen edges; instead the inset is
- * expressed as a plain percentage so the capsule centres itself. Shared with
- * the page's highlight so the two stay exactly overlaid.
+ * Share of a wide window the capsule spans: the reference 2-in-1 floats a pill
+ * across about 28 % of its window, and that is the proportion kept here.
  */
-export const NAV_BAR_WIDTH: string = '74%';
+const NAV_WIDE_SHARE: number = 0.28;
+/** The phone's pill length in vp: 74 % of a 360 vp screen, 4.75 times its height. */
+const NAV_PHONE_VP: number = 266;
+
 /**
- * Longest the capsule may get, in vp.
+ * Length of the capsule for a window this wide, in vp.
  *
- * 74 % is a phone proportion, and the reference floats it on a phone: 266 vp of
- * a 360 vp screen, a pill 4.75 times as long as it is tall. The same percentage
- * of a tablet or a 2-in-1 window drew a bar two to four times that length, with
- * the four tabs strung out across it and the glass reading as a strip instead of
- * a capsule. The width is a percentage so a narrow window still insets itself,
- * and this cap holds the length at the phone's on anything wider. 280 rather
- * than 266 leaves a few vp of slack, so an ordinary phone is never trimmed.
+ * A phone gets 74 % of its window, as the reference floats it: 266 vp of 360, a
+ * pill 4.75 times as long as it is tall. Keeping that percentage on a tablet or
+ * a 2-in-1 window strung the four tabs out into a strip, and holding the length
+ * at the phone's number instead left a stub in the middle of the window. So the
+ * pill is as long as the phone's until the window is wide enough for 28 % of it
+ * to be longer than that (about 950 vp), and from there it keeps that share, the
+ * one the reference 2-in-1 draws. A window narrower than a phone's 360 vp still
+ * insets itself rather than overflowing.
  */
-export const NAV_BAR_MAX: number = 280;
+export function navWidth(windowVp: number): number {
+  if (!(windowVp > 0)) {
+    return NAV_PHONE_VP;
+  }
+  const share: number = Math.max(NAV_PHONE_VP, windowVp * NAV_WIDE_SHARE);
+  return Math.round(Math.min(windowVp * NAV_PHONE_SHARE, share));
+}
 
 /**
  * The bottom navigation, the one place this build deliberately differs from the
@@ -43,6 +52,8 @@ export struct BottomNav {
   @StorageProp('safe_bottom') safeBottom: number = 40;
   @Prop selected: number = 0;
   @Prop autoActive: boolean = false;
+  /** Capsule length in vp for the current window, from `navWidth`. */
+  @Prop barWidth: number = NAV_PHONE_VP;
   onSelect: (index: number) => void = () => {};
   // The highlight is drawn by the host page: a child of the node that carries
   // the glass is composited into the blur/tint layer and loses its colour, so
@@ -112,11 +123,8 @@ export struct BottomNav {
       .height(NAV_HEIGHT)
       .padding({ left: 8, right: 8 })
     }
-    .width(NAV_BAR_WIDTH)
+    .width(this.barWidth)
     .height(NAV_HEIGHT)
-    // A tablet or a desktop window gets the phone's length instead of a stretched
-    // strip; a narrow window is still inset by the percentage above.
-    .constraintSize({ maxWidth: NAV_BAR_MAX })
     // A capsule that floats over the list instead of a bar glued to the edge.
     // The bottom inset lifts it clear of the system gesture bar in full screen.
     .borderRadius(NAV_RADIUS)

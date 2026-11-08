@@ -815,16 +815,24 @@ check('the reported appearance resolves ahead of the ability snapshot',
 # 27. The bottom bar is a phone proportion: 74 % of a 360 vp screen, a pill about
 #     five times as long as it is tall. On a tablet or a 2-in-1 window the same
 #     percentage drew a strip two to four times that length, the four tabs strung
-#     out along it and the glass reading as a bar glued to the edge again. The
-#     length is held at the phone's, on the capsule and on the highlight the page
-#     paints over it, from the one constant so the two cannot drift apart.
+#     out along it and the glass reading as a bar glued to the edge again; holding
+#     the length at the phone's instead left a stub in the middle of the window.
+#     The reference 2-in-1 floats a pill across about 28 % of its window, so the
+#     length is the phone's until the window is wide enough for that share to be
+#     longer, and follows the window as it is resized. The capsule and the
+#     highlight the page paints over it are cut from the same function so the two
+#     cannot drift apart.
 bottom_nav = (ROOT / 'entry/src/main/ets/components/BottomNav.ets').read_text(encoding='utf-8')
-check('the bottom bar keeps the phone length on a wide window',
-      'export const NAV_BAR_MAX: number = 280' in bottom_nav
-      and '.constraintSize({ maxWidth: NAV_BAR_MAX })' in bottom_nav)
-check('the highlight over the bar is capped with it',
-      '.constraintSize({ maxWidth: NAV_BAR_MAX })' in home
-      and 'NAV_BAR_WIDTH, NAV_BAR_MAX' in home)
+check('the bottom bar keeps its shape on every window',
+      'export function navWidth(windowVp: number): number' in bottom_nav
+      and 'Math.min(windowVp * NAV_PHONE_SHARE, share)' in bottom_nav)
+check('the capsule and its highlight are cut from the same length',
+      '.width(this.barWidth)' in bottom_nav
+      and 'barWidth: navWidth(this.windowVp)' in home
+      and '.width(navWidth(this.windowVp))' in home)
+check('the length follows the window as it is resized',
+      "win.on('windowSizeChange'" in home
+      and 'px2vp(win.getWindowProperties().windowRect.width)' in home)
 
 if failures:
     print('keep-alive audit:')

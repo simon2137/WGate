@@ -14,7 +14,7 @@ import {
   startTunnel, stopTunnel
 } from '../service/VpnControl';
 import { Palette, Type, ROW_PAD_H , FONT, applyScheme, resolveTheme, isLightScheme, glassCore, glassHalo, followSystemAppearance} from '../theme/Theme';
-import { BottomNav, NAV_BAR_WIDTH, NAV_BAR_MAX } from '../components/BottomNav';
+import { BottomNav, navWidth } from '../components/BottomNav';
 import { PinLockPad } from '../components/PinLockPad';
 import { SurfaceRow, SectionHeader } from '../components/SurfaceRow';
 import { TunnelsView } from '../view/TunnelsView';
@@ -60,6 +60,10 @@ struct Home {
   // pass, which washes its colour out to a grey smudge.
   @State navGlowX: number = -300;
   @State navGlow: number = 0;
+  // Width of the window in vp, fed to `navWidth` so the capsule keeps its shape
+  // on a tablet or a 2-in-1 window instead of stretching or shrinking to a stub.
+  // Zero until the window is measured.
+  @State windowVp: number = 0;
   @State tunnels: WgTunnel[] = [];
   @State activeId: string = '';
   @State toast: string = '';
@@ -92,6 +96,7 @@ struct Home {
     this.themeName = SettingsStore.theme();
     applyScheme(resolveTheme(this.themeName, context));
     this.syncWindowTheme(context);
+    this.watchWidth(context);
     // The interface language is looked up per literal, so it only has to be set
     // once before the first page is built. Only three interfaces are offered, so
     // anything else stored by an earlier build folds onto one of them here too.
@@ -148,6 +153,27 @@ struct Home {
       });
     }).catch((e: Error) => {
       console.error(`ui: getLastWindow failed ${e.message}`);
+    });
+  }
+
+  /**
+   * Tracks the window width so the capsule can keep its shape on every device.
+   *
+   * Breakpoints follow the window, not the screen: a 2-in-1 window is resized at
+   * will and a foldable's usable width changes while it runs. `navWidth` turns
+   * this into the capsule's length — the phone's 74 % until the window is wide
+   * enough for the reference 2-in-1's 28 % to be longer, then that share.
+   */
+  private watchWidth(context: common.UIAbilityContext): void {
+    window.getLastWindow(context).then((win: window.Window) => {
+      this.windowVp = px2vp(win.getWindowProperties().windowRect.width);
+      win.on('windowSizeChange', (size: window.Size) => {
+        this.windowVp = px2vp(size.width);
+      });
+    }).catch((e: Error) => {
+      // The capsule keeps the phone's length; narrower than it could be, and
+      // nothing else in the app depends on the measurement.
+      console.error(`ui: window metrics unavailable ${e.message}`);
     });
   }
 
@@ -709,6 +735,7 @@ struct Home {
       BottomNav({
         selected: this.tab,
         autoActive: this.activeId.length > 0 && SettingsStore.autoEnabled(),
+        barWidth: navWidth(this.windowVp),
         onSelect: (index: number) => {
           // Wrapping the branch change in animateTo drives the if/else views'
           // appearance/disappearance transitions, so switching tabs slides and
@@ -735,9 +762,8 @@ struct Home {
       // A radial gradient rather than a solid disc: a hard-edged circle reads as a
       // pasted layer, light has no edge.
       Column()
-        .width(NAV_BAR_WIDTH)
-        // Same cap as the capsule, so the light stays inside it on a wide window.
-        .constraintSize({ maxWidth: NAV_BAR_MAX })
+        .width(navWidth(this.windowVp))
+        // The same length as the capsule, so the light stays inside it.
         .height(56)
         .radialGradient({
           center: [this.navGlowX, 28],
