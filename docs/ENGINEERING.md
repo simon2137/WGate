@@ -1006,7 +1006,7 @@ the picker rebuilds the stack through `reloadUi()`.
 
 The catalogues are keyed by the English text, which keeps the mapping honest: a
 literal the reference words differently simply stays English instead of showing a
-wrong translation. Today both Chinese payloads carry 348 rows against the 333
+wrong translation. Today both Chinese payloads carry 439 rows against the 382
 literals the source asks for, and the fifteen that still do not resolve are
 deliberate — `AMOLED`, `DNS`, `H1`–`H4`, `Jc`/`Jmax`/`Jmin`, `S1`–`S3`, `WGate`,
 `Liberapay`, and the two donation URLs, which neither Chinese folder
@@ -1022,6 +1022,13 @@ translates first and then substitutes, and
 `python tools/add_template_rows.py` inserts those four rows from the reference
 (`peer_template`, `handshake_template`, `via_entry`, `uptime_template`); the tunnel
 row's peer line, handshake line, `via` line and uptime now go through it.
+
+Counts are templates for the same reason: `%1$s tunnels deleted` lets Chinese write
+`3 个隧道已删除`, with the number in front. The tunnel list's confirmations used to be
+template literals written at the call site, which skipped the lookup altogether — a
+Chinese interface printed `Sorted by latency (1 measured)` and `3 tunnels deleted` in
+English. `tools/check_keepalive.py` now fails on an `onError()` whose argument starts
+with a backtick, so a new toast cannot bypass the catalogue by accident.
 
 Rows arrive three ways. Copied from the reference with
 `python tools/add_catalog_row.py`, authored here with
@@ -1144,7 +1151,7 @@ pwsh -File tools/run_host_tests.ps1
 | `tools/keepalive_probe.c` | an idle tunnel on a host whose clock is past 180 s: a persistent keepalive from the handshake on, with no data packet first, and the socket retry loop after a name stops resolving | keepalive on an idle session, retries re-armed |
 | `tools/recycle_probe.c` | a socket recycle whose re-resolve fails after a healthy socket existed: the fd is released so `engine_tick()` retries instead of leaving an unresolved tunnel with a live-looking socket | failed recycle releases the fd, retries continue |
 | `tools/jsontest.cpp` | the base64/flat-JSON configuration bridge that `open()` relies on, including the `peerCount` / `peerN<Field>` hand-off | 33 checks, 0 failures |
-| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, and that connecting asks for the notification permission while a refusal is never reported as a failed start | 160 checks, 0 failures |
+| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, and that connecting asks for the notification permission while a refusal is never reported as a failed start | 162 checks, 0 failures |
 
 Screens checked on the emulator after the last build:
 

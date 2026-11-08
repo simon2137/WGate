@@ -320,7 +320,8 @@ export struct TunnelsView {
     this.endSelection();
     this.sheet = SHEET_NONE;
     this.onChanged();
-    this.onError(removed.length === 1 ? Tr.t('Tunnel deleted') : `${removed.length} tunnels deleted`);
+    this.onError(removed.length === 1 ? Tr.t('Tunnel deleted') :
+      Tr.tf('%1$s tunnels deleted', removed.length.toString()));
   }
 
   private copySelected(): void {
@@ -338,7 +339,8 @@ export struct TunnelsView {
     const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, text);
     pasteboard.getSystemPasteboard().setData(data).then(() => {
       this.sheet = SHEET_NONE;
-      this.onError(list.length === 1 ? Tr.t('Configuration copied') : `${list.length} configurations copied`);
+      this.onError(list.length === 1 ? Tr.t('Configuration copied') :
+        Tr.tf('%1$s configurations copied', list.length.toString()));
     }).catch(() => {
       this.onError(Tr.t('Could not copy the configuration'));
     });
@@ -360,7 +362,7 @@ export struct TunnelsView {
     this.sheet = SHEET_NONE;
     this.endSelection();
     this.onChanged();
-    this.onError(`Moved to ${trimmed}`);
+    this.onError(Tr.tf('Moved to %1$s', trimmed));
   }
 
   private async toggle(tunnel: WgTunnel, on: boolean): Promise<void> {
@@ -781,10 +783,10 @@ export struct TunnelsView {
       fileIo.writeSync(file.fd, parts.join('\n\n'));
       fileIo.closeSync(file);
       Diag.write(`group export ${name}: ${uris[0]} (${list.length} tunnels)`);
-      this.onError(`Exported ${list.length} tunnel(s)`);
+      this.onError(Tr.tf('Exported %1$s tunnel(s)', list.length.toString()));
     } catch (err) {
       const error = err as BusinessError;
-      this.onError(`Export failed: ${error.message}`);
+      this.onError(Tr.tf('Export failed: %1$s', error.message));
     }
     this.sheet = SHEET_NONE;
   }
@@ -811,7 +813,7 @@ export struct TunnelsView {
     } catch (err) {
       this.probing = false;
       Diag.write(`sort by latency: measurement failed: ${err}`);
-      this.onError(`Could not measure latency: ${(err as BusinessError).message}`);
+      this.onError(Tr.tf('Could not measure latency: %1$s', (err as BusinessError).message));
       return;
     }
     let measured: number = 0;
@@ -826,7 +828,7 @@ export struct TunnelsView {
     SettingsStore.setSortMode('latency');
     this.epoch++;
     Diag.write(`sort by latency: ${measured} of ${this.tunnels.length} measured`);
-    this.onError(measured > 0 ? `Sorted by latency (${measured} measured)` :
+    this.onError(measured > 0 ? Tr.tf('Sorted by latency (%1$s measured)', measured.toString()) :
       Tr.t('No tunnel answered, the order is unchanged'));
   }
 

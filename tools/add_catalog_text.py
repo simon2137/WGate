@@ -496,6 +496,33 @@ AUTHORED: dict[str, dict[str, str]] = {
         'zh_CN': '无法打开浏览器',
         'zh_TW': '無法開啟瀏覽器',
     },
+    # The tunnel list's confirmations (`view/TunnelsView.ets`). They were written
+    # as template literals at the call site, so they stayed English in every
+    # locale: a Chinese interface printed `Sorted by latency (1 measured)` and
+    # `3 tunnels deleted`. The reference carries `sort_by_latency` as the menu
+    # label only, and its plurals describe the "move to group" preview rather
+    # than these confirmations, so the wording here is ours. The count travels in
+    # `%1$s` so the translation can put it where Chinese puts it.
+    'Sorted by latency (%1$s measured)': {
+        'zh_CN': '已按延迟排序（%1$s 个有响应）',
+        'zh_TW': '已按延遲排序（%1$s 個有響應）',
+    },
+    'Could not measure latency: %1$s': {
+        'zh_CN': '无法测量延迟：%1$s',
+        'zh_TW': '無法測量延遲：%1$s',
+    },
+    '%1$s tunnels deleted': {
+        'zh_CN': '%1$s 个隧道已删除',
+        'zh_TW': '%1$s 個隧道已刪除',
+    },
+    '%1$s configurations copied': {
+        'zh_CN': '%1$s 个配置已复制',
+        'zh_TW': '%1$s 個配置已複製',
+    },
+    'Moved to %1$s': {
+        'zh_CN': '已移动到 %1$s',
+        'zh_TW': '已移動到 %1$s',
+    },
 }
 
 

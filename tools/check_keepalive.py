@@ -774,6 +774,21 @@ check('a switch the system forbids leads to the system switch',
       'if (on && !this.systemAllows())' in notifications_page
       and 'this.openSystemNotificationSettings();' in notifications_page)
 
+# 25. The toast a person reads after tapping a row is part of the interface, so it
+#     has to come out of the catalogue like every other label. Written straight into
+#     the call site as a template literal it skipped the lookup entirely: the tunnel
+#     list printed `Sorted by latency (1 measured)` and `3 tunnels deleted` in
+#     English while the rest of the screen was Chinese. Counts travel as `%1$s`, so a
+#     translation can put the number where its own language puts it.
+raw_toasts = re.findall(r'this\.onError\(\s*`', tunnels_view)
+check('the tunnel list does not print a toast straight from a template literal',
+      not raw_toasts, f'{len(raw_toasts)} raw literal(s)')
+check('the sort and multi-select confirmations carry their count as a template',
+      "Tr.tf('Sorted by latency (%1$s measured)', measured.toString())" in tunnels_view
+      and "Tr.tf('%1$s tunnels deleted', removed.length.toString())" in tunnels_view
+      and "Tr.tf('%1$s configurations copied', list.length.toString())" in tunnels_view
+      and "Tr.tf('Moved to %1$s', trimmed)" in tunnels_view)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:
