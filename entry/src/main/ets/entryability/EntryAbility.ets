@@ -1,4 +1,4 @@
-import { AbilityConstant, UIAbility, Want } from '@kit.AbilityKit';
+import { AbilityConstant, Configuration, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window, display } from '@kit.ArkUI';
 import { vpnExtension } from '@kit.NetworkKit';
@@ -7,7 +7,7 @@ import wgcore from 'libwgcore.so';
 import { WgTunnel, parseWgQuick } from '../model/Tunnel';
 import { TunnelStore } from '../service/TunnelStore';
 import { SettingsStore } from '../service/SettingsStore';
-import { schemeFor, resolveTheme } from '../theme/Theme';
+import { schemeFor, resolveTheme, followSystemAppearance } from '../theme/Theme';
 import { Diag } from '../util/Diag';
 import { publishedTunnelId } from '../service/EngineStatus';
 import { KeepAlive } from '../service/KeepAlive';
@@ -64,6 +64,20 @@ export default class EntryAbility extends UIAbility {
     }
     if (want.action === ACTION_TOGGLE) {
       this.quickAction();
+    }
+  }
+
+  /**
+   * The device appearance moved while this ability was on screen — most often
+   * the system light/dark switch. That is the change `automatic` used to notice
+   * only at the next launch: the stored theme is what decides, and with an
+   * explicit light/dark choice in place a system flip is none of our business
+   * (see `followSystemAppearance`).
+   */
+  onConfigurationUpdate(newConfig: Configuration): void {
+    hilog.info(0x0000, TAG, `EntryAbility onConfigurationUpdate colorMode=${newConfig.colorMode}`);
+    if (followSystemAppearance(SettingsStore.theme(), newConfig.colorMode)) {
+      Diag.write(`theme: followed the system appearance (color mode ${newConfig.colorMode})`);
     }
   }
 

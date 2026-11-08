@@ -83,6 +83,16 @@ const LIGHT: ColorScheme = {
 
 let current: ColorScheme = DARK;
 
+/**
+ * True once a page has painted with a scheme.
+ *
+ * The ability is configured before its page exists, and a device appearance
+ * report can arrive that early; there is nothing to repaint at that point, and
+ * the page applies the stored scheme itself as it appears, so acting on it
+ * would only tear down a stack that is still being built.
+ */
+let painted: boolean = false;
+
 /** Maps a stored theme name to the scheme it paints. */
 export function schemeFor(mode: string): ColorScheme {
   if (mode === 'light') {
@@ -104,6 +114,7 @@ export function schemeFor(mode: string): ColorScheme {
  */
 export function applyScheme(mode: string): void {
   current = schemeFor(mode);
+  painted = true;
   const tick: number = AppStorage.get<number>('theme_tick') ?? 0;
   AppStorage.setOrCreate('theme_mode', mode);
   AppStorage.setOrCreate('theme_tick', tick + 1);
@@ -177,13 +188,67 @@ export function resolveTheme(mode: string, context: common.UIAbilityContext): st
   if (mode !== 'automatic') {
     return mode;
   }
+  const remembered: number | undefined = AppStorage.get<number>('device_color_mode');
+  if (remembered !== undefined) {
+    return schemeForColorMode(remembered);
+  }
   try {
-    const colorMode: number | undefined = context.config.colorMode;
-    const light: number = ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT;
-    return colorMode === light ? 'light' : 'dark';
+    return schemeForColorMode(context.config.colorMode);
   } catch (e) {
     return 'dark';
   }
+}
+
+/** The palette name a device colour mode asks for. */
+export function schemeForColorMode(colorMode: number | undefined): string {
+  const light: number = ConfigurationConstant.ColorMode.COLOR_MODE_LIGHT;
+  return colorMode === light ? 'light' : 'dark';
+}
+
+/**
+ * Records the appearance the ability was last configured with.
+ *
+ * `context.config` is a snapshot, and at startup it is not trustworthy for
+ * `automatic` yet (see `Home.syncWindowTheme`); the value a configuration
+ * callback carried is, so it is kept here and resolves ahead of the context.
+ */
+export function rememberColorMode(colorMode: number | undefined): void {
+  if (colorMode !== undefined) {
+    AppStorage.setOrCreate('device_color_mode', colorMode);
+  }
+}
+
+/**
+ * Follows a device appearance change while the app is running.
+ *
+ * `automatic` used to be resolved once, at launch, so switching the system
+ * theme needed a restart. The ability reports the new configuration now
+ * (`onConfigurationUpdate`) and the list screen asks again whenever it becomes
+ * visible, and both of those land here: the stored name decides, because an
+ * explicit light/dark choice is the user's and a system flip must not override
+ * it, while `automatic` repaints. A device that is already showing the scheme
+ * the app painted is left alone, so a foreground does not reload the stack.
+ *
+ * The repaint goes through `applySchemeAndReload` for the reason recorded
+ * there: swapping the palette in place leaves the modifiers that did not change
+ * their expression on the old colours.
+ *
+ * Returns true when the app repainted, so the caller can say so in the trace.
+ */
+export function followSystemAppearance(mode: string, colorMode: number | undefined): boolean {
+  // Kept even when the palette must not move: `resolveTheme` reads it the next
+  // time the setting becomes `automatic`, and a stale value would answer with
+  // the appearance the device had before the flip.
+  rememberColorMode(colorMode);
+  if (mode !== 'automatic' || !painted || colorMode === undefined) {
+    return false;
+  }
+  const resolved: string = schemeForColorMode(colorMode);
+  if (schemeFor(resolved) === current) {
+    return false;
+  }
+  applySchemeAndReload(resolved);
+  return true;
 }
 
 export class Palette {

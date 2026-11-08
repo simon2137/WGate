@@ -1081,6 +1081,20 @@ light palette); `dynamic` has no accent API on HarmonyOS and paints the dark
 palette, which its row says. The choice persists in `theme`, and `Home` applies it
 before the first frame, so a restart comes up in the chosen theme.
 
+Resolution used to happen once, in `Home.aboutToAppear`, and never again: with
+`automatic` stored, switching the system theme left the app on the old palette
+until it was restarted. Two places ask again now —
+`EntryAbility.onConfigurationUpdate` (the ability reports the new `colorMode`) and
+`Home.onPageShow` (a flip made while another window was in front is never
+delivered as a callback) — both through `followSystemAppearance` in `Theme.ets`.
+It does nothing unless `automatic` is stored and the device now shows a different
+scheme, so an explicit light/dark choice is left alone and a foreground does not
+rebuild the stack for nothing; when it does act it goes through
+`applySchemeAndReload` for the reason above. The reported `colorMode` is kept in
+AppStorage (`device_color_mode`) and `resolveTheme` reads it ahead of
+`context.config`, whose snapshot is not trustworthy for `automatic` at startup.
+`tools/check_keepalive.py` pins all of it.
+
 Both Appearance rows show the stored value. `router.back()` neither re-runs
 `aboutToAppear` nor restarts a timer stopped by `aboutToDisappear`, and
 `onPageShow` did not fire on return either, so the two values are polled every
@@ -1151,7 +1165,7 @@ pwsh -File tools/run_host_tests.ps1
 | `tools/keepalive_probe.c` | an idle tunnel on a host whose clock is past 180 s: a persistent keepalive from the handshake on, with no data packet first, and the socket retry loop after a name stops resolving | keepalive on an idle session, retries re-armed |
 | `tools/recycle_probe.c` | a socket recycle whose re-resolve fails after a healthy socket existed: the fd is released so `engine_tick()` retries instead of leaving an unresolved tunnel with a live-looking socket | failed recycle releases the fd, retries continue |
 | `tools/jsontest.cpp` | the base64/flat-JSON configuration bridge that `open()` relies on, including the `peerCount` / `peerN<Field>` hand-off | 33 checks, 0 failures |
-| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, and that connecting asks for the notification permission while a refusal is never reported as a failed start | 162 checks, 0 failures |
+| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, that connecting asks for the notification permission while a refusal is never reported as a failed start, and that `automatic` follows a system appearance change while the app runs instead of at the next restart | 167 checks, 0 failures |
 
 Screens checked on the emulator after the last build:
 

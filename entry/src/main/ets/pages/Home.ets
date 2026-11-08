@@ -13,7 +13,7 @@ import { AutoTunnel } from '../service/AutoTunnel';
 import {
   startTunnel, stopTunnel
 } from '../service/VpnControl';
-import { Palette, Type, ROW_PAD_H , FONT, applyScheme, resolveTheme, isLightScheme, glassCore, glassHalo} from '../theme/Theme';
+import { Palette, Type, ROW_PAD_H , FONT, applyScheme, resolveTheme, isLightScheme, glassCore, glassHalo, followSystemAppearance} from '../theme/Theme';
 import { BottomNav, NAV_BAR_WIDTH } from '../components/BottomNav';
 import { PinLockPad } from '../components/PinLockPad';
 import { SurfaceRow, SectionHeader } from '../components/SurfaceRow';
@@ -107,7 +107,14 @@ struct Home {
 
   onPageShow(): void {
     this.reload();
-    this.syncWindowTheme(getContext(this) as common.UIAbilityContext);
+    // A system appearance change made while another window was in front is not
+    // delivered as a configuration callback — the ability was not the one being
+    // configured — so the screen that comes back asks the device itself. With
+    // `automatic` stored this repaints, and with any other theme it does
+    // nothing (see `followSystemAppearance`).
+    const context = getContext(this) as common.UIAbilityContext;
+    followSystemAppearance(SettingsStore.theme(), context.config.colorMode);
+    this.syncWindowTheme(context);
     // Resuming after the system took the VPN down leaves the rules intact; ask
     // again so a trusted network puts the tunnel back up without a manual tap.
     AutoTunnel.evaluate('page shown');

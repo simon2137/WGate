@@ -789,6 +789,29 @@ check('the sort and multi-select confirmations carry their count as a template',
       and "Tr.tf('%1$s configurations copied', list.length.toString())" in tunnels_view
       and "Tr.tf('Moved to %1$s', trimmed)" in tunnels_view)
 
+# 26. `automatic` resolved the device appearance once, at launch: the palette was
+#     read from the ability's configuration in `aboutToAppear` and never again, so
+#     switching the system theme left the app on the old colours until it was
+#     restarted. The ability now reports the new configuration, and the list screen
+#     asks again whenever it becomes visible (a flip made while another window was
+#     in front is not delivered as a callback). An explicit light/dark choice stays
+#     the user's: a system flip must not override it, and a device that already
+#     shows the painted scheme must not reload the stack on every foreground.
+theme_module = (ROOT / 'entry/src/main/ets/theme/Theme.ets').read_text(encoding='utf-8')
+ability = (ROOT / 'entry/src/main/ets/entryability/EntryAbility.ets').read_text(encoding='utf-8')
+check('a system appearance change repaints instead of waiting for a restart',
+      'onConfigurationUpdate(newConfig: Configuration): void' in ability
+      and 'followSystemAppearance(SettingsStore.theme(), newConfig.colorMode)' in ability)
+check('the list screen asks the device again when it comes back',
+      'followSystemAppearance(SettingsStore.theme(), context.config.colorMode)' in home)
+check('an explicit theme is not overridden by the system',
+      "if (mode !== 'automatic' || !painted || colorMode === undefined) {" in theme_module)
+check('a repaint only happens when the palette actually moves',
+      'if (schemeFor(resolved) === current) {' in theme_module)
+check('the reported appearance resolves ahead of the ability snapshot',
+      "AppStorage.get<number>('device_color_mode')" in theme_module
+      and "AppStorage.setOrCreate('device_color_mode', colorMode)" in theme_module)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:
