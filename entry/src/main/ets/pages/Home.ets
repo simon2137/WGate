@@ -14,7 +14,7 @@ import {
   startTunnel, stopTunnel
 } from '../service/VpnControl';
 import { Palette, Type, ROW_PAD_H , FONT, applyScheme, resolveTheme, isLightScheme, glassCore, glassHalo, followSystemAppearance} from '../theme/Theme';
-import { BottomNav, NAV_BAR_WIDTH } from '../components/BottomNav';
+import { BottomNav, NAV_BAR_WIDTH, NAV_BAR_MAX } from '../components/BottomNav';
 import { PinLockPad } from '../components/PinLockPad';
 import { SurfaceRow, SectionHeader } from '../components/SurfaceRow';
 import { TunnelsView } from '../view/TunnelsView';
@@ -736,6 +736,8 @@ struct Home {
       // pasted layer, light has no edge.
       Column()
         .width(NAV_BAR_WIDTH)
+        // Same cap as the capsule, so the light stays inside it on a wide window.
+        .constraintSize({ maxWidth: NAV_BAR_MAX })
         .height(56)
         .radialGradient({
           center: [this.navGlowX, 28],

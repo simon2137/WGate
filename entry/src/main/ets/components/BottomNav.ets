@@ -16,6 +16,18 @@ const NAV_EDGE_GAP: number = 16;
  * the page's highlight so the two stay exactly overlaid.
  */
 export const NAV_BAR_WIDTH: string = '74%';
+/**
+ * Longest the capsule may get, in vp.
+ *
+ * 74 % is a phone proportion, and the reference floats it on a phone: 266 vp of
+ * a 360 vp screen, a pill 4.75 times as long as it is tall. The same percentage
+ * of a tablet or a 2-in-1 window drew a bar two to four times that length, with
+ * the four tabs strung out across it and the glass reading as a strip instead of
+ * a capsule. The width is a percentage so a narrow window still insets itself,
+ * and this cap holds the length at the phone's on anything wider. 280 rather
+ * than 266 leaves a few vp of slack, so an ordinary phone is never trimmed.
+ */
+export const NAV_BAR_MAX: number = 280;
 
 /**
  * The bottom navigation, the one place this build deliberately differs from the
@@ -102,6 +114,9 @@ export struct BottomNav {
     }
     .width(NAV_BAR_WIDTH)
     .height(NAV_HEIGHT)
+    // A tablet or a desktop window gets the phone's length instead of a stretched
+    // strip; a narrow window is still inset by the percentage above.
+    .constraintSize({ maxWidth: NAV_BAR_MAX })
     // A capsule that floats over the list instead of a bar glued to the edge.
     // The bottom inset lifts it clear of the system gesture bar in full screen.
     .borderRadius(NAV_RADIUS)
