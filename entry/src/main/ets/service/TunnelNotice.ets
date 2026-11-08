@@ -149,8 +149,15 @@ export class TunnelNotice {
     if (notice.key === TunnelNotice.lastKey) {
       return;
     }
-    TunnelNotice.lastKey = notice.key;
-    await Notifier.update(notice.title, notice.text);
+    /*
+     * The key is committed only once the system took the text. When it refused —
+     * the app may not post until the user allows it — the notice stays pending,
+     * so the tick that follows the grant puts it up instead of waiting for the
+     * counters to cross the next 64 KiB step.
+     */
+    if (await Notifier.update(notice.title, notice.text)) {
+      TunnelNotice.lastKey = notice.key;
+    }
   }
 
   /**
@@ -159,11 +166,16 @@ export class TunnelNotice {
    * this line the log cannot say whether the app took it down or the system did.
    */
   static async clear(reason: string): Promise<void> {
-    Diag.write(`notice: cleared (${reason})`);
     if (TunnelNotice.lastKey.length === 0) {
+      /*
+       * Nothing was up. The watchdog asks for this on every tick while the user
+       * has the shade switched off, and a trace line per tick would bury the
+       * tunnel's own lines.
+       */
       return;
     }
     TunnelNotice.lastKey = '';
+    Diag.write(`notice: cleared (${reason})`);
     await Notifier.clear();
   }
 }

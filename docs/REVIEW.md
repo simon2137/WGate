@@ -29,6 +29,10 @@
 
 见 `entry/src/main/module.json5` 的 `requestPermissions`。
 
+通知不是 manifest 权限，而是系统在运行时单独询问：连接隧道时应用会请求通知授权（`requestEnableNotification`），因为通知栏里那条状态通知是隧道在后台唯一的可见入口（隧道本身由 VPN 扩展进程持有，不受应用进程挂起影响）。用户拒绝时隧道照常工作，只是通知栏里不出现状态通知；用户随时可以在「设置 → 外观 → 通知」页最上面的「设置」行打开系统开关，打开后通知会在下一次刷新时自动出现，不需要重连。
+
+见 `entry/src/main/ets/service/Notifier.ets` 的 `requestIfOff`，调用点是 `entry/src/main/ets/pages/Index.ets` 与 `entry/src/main/ets/view/TunnelsView.ets` 的连接入口。
+
 ## 三、后台能力声明（`backgroundModes`）
 
 `module.json5` 里 `EntryAbility` 声明了一项后台模式：
@@ -73,7 +77,7 @@
 
 1. 安装并打开应用，首屏是隧道列表（空列表时有引导文案）。
 2. 点右上角 `+`，选「手动创建」或「从文件或 zip」，填入/导入一份 WireGuard 配置（`[Interface]` + `[Peer]`）。
-3. 返回列表点那条隧道，连接；通知栏出现当前隧道的状态通知，桌面端在系统托盘出现图标。
+3. 返回列表点那条隧道，连接（首次连接会弹出系统的通知授权询问，用于在通知栏显示隧道状态）；允许后通知栏出现当前隧道的状态通知，桌面端在系统托盘出现图标。
 4. 断开、切换网络、退到后台再回来，均可复现自动重连与状态同步。
 5. 设置 → 本地日志监控器可以导出启动记录，用于核对上述行为。
 

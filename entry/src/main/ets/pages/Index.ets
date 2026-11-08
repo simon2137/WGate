@@ -22,6 +22,8 @@ import wgcore from 'libwgcore.so';
 import { WgTunnel, WgPeer, parseWgQuick, toWgQuick, toQrText } from '../model/Tunnel';
 import { TunnelStore } from '../service/TunnelStore';
 import { TunnelNotice } from '../service/TunnelNotice';
+import { Notifier } from '../service/Notifier';
+import { startupProblem } from '../service/VpnControl';
 import { withTimeout, isTimeout } from '../util/Async';
 import { Diag } from '../util/Diag';
 import { BridgeStatus, StatusBridge } from '../util/StatusBridge';
@@ -454,6 +456,9 @@ struct Index {
       TunnelStore.setLastError('');
       TunnelStore.setDesired(tunnel.id);
       Diag.write(`connect requested: ${tunnel.name} -> ${tunnel.peers[0].host}:${tunnel.peers[0].port}`);
+      // Asked before the tunnel, never awaited: the shade is not allowed yet on
+      // a fresh install, and the dialog must not hold up the connect.
+      Notifier.requestIfOff(getContext(this) as common.UIAbilityContext);
       await withTimeout(vpnExtension.startVpnExtensionAbility(this.extensionWant(tunnel)),
         START_TIMEOUT_MS, 'start');
       Diag.write('startVpnExtensionAbility returned, the extension should be up');
@@ -482,27 +487,16 @@ struct Index {
    * the tun device, and a failure there happens in the extension's own process.
    * A few seconds later the trace file says what went wrong; surface it instead
    * of leaving the user with a switch that quietly flipped back.
+   *
+   * The reading itself lives in `VpnControl.startupProblem`: the switch on this
+   * page and the one in the tunnel list must not grow two different opinions of
+   * what counts as a failed start.
    */
   private watchStartup(): void {
     setTimeout(() => {
-      const text: string = Diag.read();
-      if (text.length === 0) {
-        return;
-      }
-      const lines: string[] = text.split('\n').filter((line: string) => line.length > 0);
-      for (let i = lines.length - 1; i >= 0 && i >= lines.length - 4; i--) {
-        const line: string = lines[i];
-        if (line.indexOf('failed') >= 0 || line.indexOf('engine open -> -') >= 0 ||
-            line.indexOf('threw') >= 0) {
-          this.lastError = line.substring(line.indexOf('  ') + 2).trim();
-          this.flash(this.lastError);
-          return;
-        }
-      }
-      if (text.indexOf('extension onCreate') < 0) {
-        // The system accepted the request but the service never reported in, so
-        // nothing in this process knows why it stopped.
-        this.lastError = 'The WireGuard service did not start. Open Logs for the startup trace.';
+      const problem: string = startupProblem();
+      if (problem.length > 0) {
+        this.lastError = problem;
         this.flash(this.lastError);
       }
     }, 6000);

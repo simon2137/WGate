@@ -56,6 +56,20 @@ struct Notifications {
     });
   }
 
+  /**
+   * Whether the system lets this app post at all. The five switches on this page
+   * only shape the text; this one decides whether there is a notification at all,
+   * and it is not ours to keep.
+   */
+  private systemAllows(): boolean {
+    try {
+      return notificationManager.isNotificationEnabledSync();
+    } catch (error) {
+      // No answer is not a refusal.
+      return true;
+    }
+  }
+
   build() {
     Column() {
       Row() {
@@ -116,6 +130,12 @@ struct Notifications {
             onSwitch: (on: boolean) => {
               this.live = on;
               SettingsStore.setNotification('live', on);
+              if (on && !this.systemAllows()) {
+                // Turning the shade on while the system forbids it would do
+                // nothing visible. The row above is the only place that can be
+                // fixed, so open it instead of leaving the switch looking dead.
+                this.openSystemNotificationSettings();
+              }
             }
           })
           SurfaceRow({

@@ -63,6 +63,10 @@ export async function stopTunnel(tunnel: WgTunnel, reason: string): Promise<void
 /**
  * Six seconds after the request, the trace file says whether the extension came
  * up. Returns the first problem line, or '' when the start looks healthy.
+ *
+ * `notice:` lines are not the tunnel's business: the shade only mirrors it, so a
+ * device that does not allow notifications must not be reported as a tunnel that
+ * failed to start. The trace keeps those lines for whoever reads it by hand.
  */
 export function startupProblem(): string {
   const text: string = Diag.read();
@@ -72,6 +76,9 @@ export function startupProblem(): string {
   const lines: string[] = text.split('\n').filter((line: string) => line.length > 0);
   for (let i = lines.length - 1; i >= 0 && i >= lines.length - 4; i--) {
     const line: string = lines[i];
+    if (line.indexOf('notice: ') >= 0) {
+      continue;
+    }
     if (line.indexOf('failed') >= 0 || line.indexOf('engine open -> -') >= 0 ||
         line.indexOf('threw') >= 0) {
       return line.substring(line.indexOf('  ') + 2).trim();

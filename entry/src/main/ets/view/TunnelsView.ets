@@ -12,6 +12,7 @@ import {
   publishedTunnelId, isRunning
 } from '../service/EngineStatus';
 import { startTunnel, stopTunnel, startupProblem } from '../service/VpnControl';
+import { Notifier } from '../service/Notifier';
 import { TunnelStore } from '../service/TunnelStore';
 import { SettingsStore } from '../service/SettingsStore';
 import { Diag } from '../util/Diag';
@@ -368,6 +369,10 @@ export struct TunnelsView {
     }
     this.busyId = tunnel.id;
     if (on) {
+      // The shade needs the system's permission, which a store install has never
+      // been asked for; the dialog is fired and not awaited, so the connect is
+      // not held up behind it.
+      Notifier.requestIfOff(getContext(this) as common.UIAbilityContext);
       const problem: string = await startTunnel(tunnel);
       if (problem.length > 0) {
         this.onError(problem);

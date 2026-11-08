@@ -745,6 +745,35 @@ for path in sorted(ROOT.glob('entry/src/main/ets/**/*.ets')):
         visible.append(f'{path.name}: {stripped[:60]}')
 check('no label or message says VPN', not visible, '; '.join(visible[:3]))
 
+# 24. A build that arrives through the store has never been granted the
+#     notification switch: it belongs to the install, nothing asked for it, and
+#     every publish answered `1600004 Notification disabled`. The trace filled
+#     with one refusal per watchdog tick, and `startupProblem` read the last
+#     lines of that trace -- so the tunnel was reported as a failed start because
+#     the shade was off. The permission has to be asked for at a connect the user
+#     started, a refusal has to be a state instead of a failure line per tick,
+#     and the text has to stay pending so it appears as soon as the switch is on.
+vpn_control = (ROOT / 'entry/src/main/ets/service/VpnControl.ets').read_text(encoding='utf-8')
+ask = 'Notifier.requestIfOff(getContext(this) as common.UIAbilityContext)'
+check('connecting asks the system for the notification permission',
+      ask in index and ask in tunnels_view)
+check('a refused notification is not a failed start',
+      "if (line.indexOf('notice: ') >= 0)" in vpn_control
+      and 'startupProblem()' in index)
+check('a switch that is off is a state, not a failure line per tick',
+      'const NOT_ALLOWED: number = 1600004' in notifier
+      and 'offTraced' in notifier
+      and 'private static allowedNow(): boolean' in notifier)
+check('a notice the system already removed is not an error',
+      'const NOT_FOUND: number = 1600007' in notifier)
+check('the notice is only recorded once the system took it',
+      'if (await Notifier.update(notice.title, notice.text)) {' in notice
+      and 'TunnelNotice.lastKey = notice.key;' in notice)
+notifications_page = (ROOT / 'entry/src/main/ets/pages/Notifications.ets').read_text(encoding='utf-8')
+check('a switch the system forbids leads to the system switch',
+      'if (on && !this.systemAllows())' in notifications_page
+      and 'this.openSystemNotificationSettings();' in notifications_page)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:
