@@ -834,6 +834,23 @@ check('the length follows the window as it is resized',
       "win.on('windowSizeChange'" in home
       and 'px2vp(win.getWindowProperties().windowRect.width)' in home)
 
+# 28. The version the About row shows is the package's, not a literal beside it.
+#     `SupportView` carried `const VERSION: string = '1.0.0'` and `pages/License`
+#     a `version: '1.0.0'` row, and both still said 1.0.0 in a 1.0.1 build:
+#     the number in `AppScope/app.json5` is the only one that can be right, so it
+#     is read back from the installed bundle. A literal would have to be edited
+#     in step with the package by whoever remembers, which is how it drifted.
+app_version = (ROOT / 'entry/src/main/ets/util/AppVersion.ets').read_text(encoding='utf-8')
+support_view = (ROOT / 'entry/src/main/ets/view/SupportView.ets').read_text(encoding='utf-8')
+license = (ROOT / 'entry/src/main/ets/pages/License.ets').read_text(encoding='utf-8')
+check('the About row reads the version the package reports',
+      'bundleManager.getBundleInfoForSelfSync(' in app_version
+      and 'trailingText: appVersion()' in support_view)
+check('the licence list does not carry a version of its own',
+      'version: appVersion()' in license
+      and "version: '1.0.0'" not in license
+      and "const VERSION: string = '1.0.0'" not in support_view)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:

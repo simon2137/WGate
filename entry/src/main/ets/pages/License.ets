@@ -2,6 +2,7 @@ import { router } from '@kit.ArkUI';
 import { Palette, Type, ROW_PAD_H, BAR_SPACE, FONT } from '../theme/Theme';
 import { SectionHeader } from '../components/SurfaceRow';
 import { Tr } from '../i18n/Tr';
+import { appVersion } from '../util/AppVersion';
 
 /**
  * The licence page. The reference shows an aboutlibraries list of the Android
@@ -20,9 +21,13 @@ interface Licence {
   note?: string;
 }
 
-const APP_LICENCES: Licence[] = [
-  { name: 'WGate', version: '1.0.0', licence: 'GPL-3.0' }
-];
+/**
+ * The app itself. The version comes from the package, not from a literal here:
+ * this row still said 1.0.0 after `AppScope/app.json5` moved to 1.0.1.
+ */
+function appLicences(): Licence[] {
+  return [{ name: 'WGate', version: appVersion(), licence: 'GPL-3.0' }];
+}
 
 const UPSTREAM: Licence[] = [
   {
@@ -155,7 +160,7 @@ struct License {
             .padding({ left: ROW_PAD_H, right: ROW_PAD_H, top: 10, bottom: 4 })
 
           SectionHeader({ label: Tr.t('This application') })
-          this.entries(APP_LICENCES)
+          this.entries(appLicences())
 
           SectionHeader({ label: Tr.t('Upstream project') })
           this.entries(UPSTREAM)

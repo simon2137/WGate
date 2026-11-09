@@ -6,11 +6,11 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { Palette, Type, ROW_PAD_H, BAR_SPACE, FONT } from '../theme/Theme';
 import { SurfaceRow, SectionHeader } from '../components/SurfaceRow';
 import { Tr } from '../i18n/Tr';
+import { appVersion } from '../util/AppVersion';
 
 const DOMAIN: number = 0x0001;
 const TAG: string = 'Support';
 
-const VERSION: string = '1.0.0';
 /** Where the source of this build lives; GPL-3.0 also points at it. */
 const SOURCE_URL: string = 'https://github.com/simon2137/WGate';
 /** The author's address, without the scheme: the row shows it when no mail app is installed. */
@@ -141,7 +141,7 @@ export struct SupportView {
 
           SurfaceRow({
             title: Tr.t('Version'),
-            trailingText: VERSION
+            trailingText: appVersion()
           })
 
           Text(Tr.t('Thank you for using WGate!'))
