@@ -161,7 +161,9 @@ struct Scan {
     }
     this.handling = true;
     this.decoding = true;
-    const parsed: WgTunnel | null = parseWgQuick(text, 'Scanned tunnel');
+    // The name a scanned configuration gets when it carries none of its own, in
+    // the same words every other import path uses.
+    const parsed: WgTunnel | null = parseWgQuick(text, Tr.t('Imported configuration'));
     if (parsed === null) {
       this.decoding = false;
       this.handling = false;

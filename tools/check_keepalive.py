@@ -875,6 +875,18 @@ check('a refusal is read inside the sheet, not in a toast it covers',
       "Text(this.pasteError)" in home_page
       and 'this.pasteText = value;' in home_page)
 
+
+# 30. A scanned configuration used to be named "Scanned tunnel" in every
+#     language, so the row and the toast after a scan stayed English while the
+#     file and clipboard paths named it through the catalogue.
+scan_page = (ROOT / 'entry/src/main/ets/pages/Scan.ets').read_text(encoding='utf-8')
+check('a scanned tunnel is named in the interface language',
+      "parseWgQuick(text, Tr.t('Imported configuration'))" in scan_page
+      and "'Scanned tunnel'" not in scan_page)
+check('every import path names a nameless configuration the same way',
+      scan_page.count("Tr.t('Imported configuration')") == 1
+      and home_page.count("Tr.t('Imported configuration')") == 3)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:
