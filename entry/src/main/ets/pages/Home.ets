@@ -2,7 +2,7 @@ import { common } from '@kit.AbilityKit';
 import { router, window } from '@kit.ArkUI';
 import pasteboard from '@ohos.pasteboard';
 import { fileIo, picker } from '@kit.CoreFileKit';
-import { zlib } from '@kit.BasicServicesKit';
+import { BusinessError, zlib } from '@kit.BasicServicesKit';
 import { util } from '@kit.ArkTS';
 import { WgTunnel, parseWgQuick, toWgQuick } from '../model/Tunnel';
 import { TunnelStore } from '../service/TunnelStore';
@@ -72,6 +72,14 @@ struct Home {
   @State logsText: string = '';
   @State themeName: string = 'dark';
   @State preferredId: string = '';
+  /**
+   * Set while the add sheet shows the box instead of the four rows: the clipboard
+   * read was refused, so the sheet stays open and the system pastes into the box.
+   */
+  @State pasteMode: boolean = false;
+  @State pasteText: string = '';
+  @State pasteReason: string = '';
+  @State pasteError: string = '';
   /** Set while the PIN lock is in front of the tabs. */
   @State locked: boolean = false;
   @State pinError: string = '';
@@ -199,9 +207,9 @@ struct Home {
   private copyConfig(tunnel: WgTunnel): void {
     const data = pasteboard.createData(pasteboard.MIMETYPE_TEXT_PLAIN, toWgQuick(tunnel));
     pasteboard.getSystemPasteboard().setData(data).then(() => {
-      this.flash('Configuration copied');
+      this.flash(Tr.t('Configuration copied'));
     }).catch(() => {
-      this.flash('Could not copy the configuration');
+      this.flash(Tr.t('Could not copy the configuration'));
     });
   }
 
@@ -234,8 +242,16 @@ struct Home {
     return parsed;
   }
 
+  /**
+   * HarmonyOS hands out the clipboard only to an app that holds
+   * `ohos.permission.READ_PASTEBOARD`, a system permission an ordinary install
+   * cannot obtain, so the read is normally refused. That refusal is not an empty
+   * clipboard: the add sheet stays open and turns into a box, which the system's
+   * own Paste action fills without asking this app for any permission. Switching
+   * the sheet's body rather than closing and reopening it keeps the sheet from
+   * being torn down mid-animation.
+   */
   private importFromClipboard(): void {
-    this.sheet = SHEET_NONE;
     pasteboard.getSystemPasteboard().getData().then((data: pasteboard.PasteData) => {
       let text: string = '';
       try {
@@ -243,16 +259,30 @@ struct Home {
       } catch (e) {
         Diag.write(`import: clipboard holds no text: ${e}`);
       }
-      const tunnel: WgTunnel | null = this.storeImported(text, Tr.t('Imported configuration'));
-      if (tunnel === null) {
-        this.flash(Tr.t('The clipboard holds no WireGuard configuration'));
-        return;
-      }
-      this.reload();
-      this.flash(Tr.tf('Imported %1$s', tunnel.name));
-    }).catch(() => {
-      this.flash(Tr.t('The clipboard is empty'));
+      this.importPasted(text);
+    }).catch((err: BusinessError) => {
+      Diag.write(`import: clipboard read refused (${err.code})`);
+      this.pasteText = '';
+      this.pasteReason = Tr.t('Paste the configuration into the box below instead');
+      this.pasteMode = true;
     });
+  }
+
+  /** Stores one pasted configuration, or says why it is not one. */
+  private importPasted(text: string): void {
+    const tunnel: WgTunnel | null = this.storeImported(text, Tr.t('Imported configuration'));
+    if (tunnel === null) {
+      // The sheet covers the page, so its toast would never be seen: the reason
+      // goes into the sheet itself and the box keeps what was pasted.
+      this.pasteError = Tr.t('That is not a WireGuard configuration');
+      return;
+    }
+    this.pasteError = '';
+    this.pasteText = '';
+    this.pasteMode = false;
+    this.sheet = SHEET_NONE;
+    this.reload();
+    this.flash(Tr.tf('Imported %1$s', tunnel.name));
   }
 
   /** A picked document, read as UTF-8 text. */
@@ -377,7 +407,7 @@ struct Home {
     TunnelStore.remove(tunnel.id);
     this.sheet = SHEET_NONE;
     this.reload();
-    this.flash('Tunnel deleted');
+    this.flash(Tr.t('Tunnel deleted'));
   }
 
   private detailTunnel(): WgTunnel | null {
@@ -442,33 +472,100 @@ struct Home {
   @Builder
   private importSheet() {
     Column() {
-      this.sheetHeader(Tr.t('Add tunnel'))
-      Scroll() {
-        Column() {
-          this.importOption($r('app.media.ic_folder'), Tr.t('Add from file or zip'),
-            Tr.t('.conf, .wg, or a zip of them'), () => {
-              this.importFromFileOrZip();
+      this.sheetHeader(this.pasteMode ? Tr.t('Paste config') : Tr.t('Add tunnel'))
+      if (this.pasteMode) {
+        this.pasteBox();
+      } else {
+        Scroll() {
+          Column() {
+            this.importOption($r('app.media.ic_folder'), Tr.t('Add from file or zip'),
+              Tr.t('.conf, .wg, or a zip of them'), () => {
+                this.importFromFileOrZip();
+              })
+            this.importOption($r('app.media.ic_qr'), Tr.t('Add from QR code'), '', () => {
+              this.sheet = SHEET_NONE;
+              router.pushUrl({ url: 'pages/Scan' });
             })
-          this.importOption($r('app.media.ic_qr'), Tr.t('Add from QR code'), '', () => {
-            this.sheet = SHEET_NONE;
-            router.pushUrl({ url: 'pages/Scan' });
-          })
-          this.importOption($r('app.media.ic_copy'), Tr.t('Add from clipboard'), '', () => {
-            this.importFromClipboard();
-          })
-          this.importOption($r('app.media.ic_add'), Tr.t('Create from scratch'), '', () => {
-            this.sheet = SHEET_NONE;
-            router.pushUrl({ url: 'pages/ConfigEdit' });
-          })
+            this.importOption($r('app.media.ic_copy'), Tr.t('Add from clipboard'), '', () => {
+              this.importFromClipboard();
+            })
+            this.importOption($r('app.media.ic_add'), Tr.t('Create from scratch'), '', () => {
+              this.sheet = SHEET_NONE;
+              router.pushUrl({ url: 'pages/ConfigEdit' });
+            })
+          }
+          .width('100%')
         }
-        .width('100%')
+        .layoutWeight(1)
+        .scrollBar(BarState.Off)
+        .align(Alignment.Top)
       }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
     }
     .width('100%')
     .height('100%')
+  }
+
+  /**
+   * The box that stands in for a direct clipboard read: the system's own Paste
+   * action fills it, which asks this app for no permission at all.
+   */
+  @Builder
+  private pasteBox() {
+    Scroll() {
+      Column() {
+        if (this.pasteReason.length > 0) {
+          Text(this.pasteReason)
+            .fontSize(Type.BODY_SMALL)
+            .fontFamily(FONT)
+            .fontColor(Palette.MUTED)
+            .width('100%')
+            .padding({ left: ROW_PAD_H, right: ROW_PAD_H, bottom: 12 })
+        }
+        TextArea({
+          text: this.pasteText,
+          placeholder: '[Interface]\nPrivateKey = ...\nAddress = 10.66.0.2/32\n\n[Peer]\nPublicKey = ...\nEndpoint = host:51820\nAllowedIPs = 0.0.0.0/0'
+        })
+          .fontSize(Type.BODY_SMALL)
+          .fontFamily('monospace')
+          .fontColor(Palette.ON_SURFACE)
+          .placeholderColor(Palette.MUTED)
+          .backgroundColor(Palette.SURFACE)
+          .borderRadius(8)
+          .height(220)
+          .width('100%')
+          .padding(12)
+          .defaultFocus(true)
+          .onChange((value: string) => {
+            this.pasteText = value;
+            this.pasteError = '';
+          })
+        if (this.pasteError.length > 0) {
+          Text(this.pasteError)
+            .fontSize(Type.BODY_SMALL)
+            .fontFamily(FONT)
+            .fontColor(Palette.ALERT)
+            .width('100%')
+            .padding({ top: 8 })
+        }
+        Button(Tr.t('Save'))
+          .fontColor(Palette.ON_SURFACE)
+          .backgroundColor(Palette.RAISED)
+          .width('100%')
+          .margin({ top: 12 })
+          .onClick(() => {
+            if (this.pasteText.trim().length === 0) {
+              return;
+            }
+            this.importPasted(this.pasteText);
+          })
+      }
+      .width('100%')
+      .padding({ left: ROW_PAD_H, right: ROW_PAD_H, bottom: 16 })
+      .alignItems(HorizontalAlign.Start)
+    }
+    .layoutWeight(1)
+    .scrollBar(BarState.Off)
+    .align(Alignment.Top)
   }
 
   @Builder
@@ -690,6 +787,8 @@ struct Home {
             router.pushUrl({ url: 'pages/TunnelSettings', params: { id: id } });
           },
           onAdd: () => {
+            this.pasteMode = false;
+            this.pasteError = '';
             this.sheet = SHEET_IMPORT;
           },
           onChanged: () => {
@@ -834,6 +933,7 @@ struct Home {
       backgroundColor: Palette.BACKGROUND,
       onDisappear: () => {
         this.sheet = SHEET_NONE;
+        this.pasteMode = false;
       }
     })
   }

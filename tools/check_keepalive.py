@@ -851,6 +851,30 @@ check('the licence list does not carry a version of its own',
       and "version: '1.0.0'" not in license
       and "const VERSION: string = '1.0.0'" not in support_view)
 
+# 29. The clipboard cannot be read without `ohos.permission.READ_PASTEBOARD`,
+#     which is a system permission: `module.json5` asks for six normal ones and
+#     none of them is that. The button therefore used to flash "The clipboard is
+#     empty" on every tap, which reads as the user's copy having failed. The read
+#     is still tried (a build that holds the permission would work), but a refusal
+#     now opens a box and lets the system paste into it, and the empty-clipboard
+#     wording is gone from the phone page.
+home_page = (ROOT / 'entry/src/main/ets/pages/Home.ets').read_text(encoding='utf-8')
+index_page = (ROOT / 'entry/src/main/ets/pages/Index.ets').read_text(encoding='utf-8')
+check('a refused clipboard read opens a box to paste into',
+      'this.pasteMode = true;' in home_page
+      and 'if (this.pasteMode) {' in home_page
+      and "Tr.t('Paste the configuration into the box below instead')" in home_page)
+check('a refused clipboard read is not called an empty clipboard',
+      "Tr.t('The clipboard is empty')" not in home_page
+      and 'this.flash(Tr.t(\'The clipboard is empty\'))' not in home_page)
+check('what was pasted is parsed by the same importer as a file',
+      'private importPasted(text: string): void' in home_page
+      and 'this.storeImported(text, Tr.t(\'Imported configuration\'))' in home_page
+      and "this.pasteError = Tr.t('That is not a WireGuard configuration');" in home_page)
+check('a refusal is read inside the sheet, not in a toast it covers',
+      "Text(this.pasteError)" in home_page
+      and 'this.pasteText = value;' in home_page)
+
 if failures:
     print('keep-alive audit:')
     for item in failures:

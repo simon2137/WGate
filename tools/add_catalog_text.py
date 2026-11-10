@@ -523,6 +523,19 @@ AUTHORED: dict[str, dict[str, str]] = {
         'zh_CN': '已移动到 %1$s',
         'zh_TW': '已移動到 %1$s',
     },
+    # Importing from the clipboard (`pages/Home.ets`). HarmonyOS only lets an app
+    # read the clipboard with `ohos.permission.READ_PASTEBOARD`, a system
+    # permission an ordinary install cannot hold, so the button opens a box and
+    # the system pastes into it. The old wording claimed the clipboard was empty,
+    # which sent people looking for a copy that had in fact worked.
+    'Paste the configuration into the box below instead': {
+        'zh_CN': '请把配置粘贴到下方输入框',
+        'zh_TW': '請把配置貼上到下方輸入框',
+    },
+    'That is not a WireGuard configuration': {
+        'zh_CN': '这不是 WireGuard 配置',
+        'zh_TW': '這不是 WireGuard 配置',
+    },
 }
 
 

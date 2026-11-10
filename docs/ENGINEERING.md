@@ -501,9 +501,15 @@ HarmonyOS 6.0 (API 26) or newer.
 Two clipboard facts shaped the UI. Writing the clipboard needs no permission, so
 **Copy** works. Reading it needs `ohos.permission.READ_PASTEBOARD`, which is
 `system_basic` as well, so an app signed the normal way cannot call
-`getSystemPasteboard().getData()` — it throws. "Import from clipboard" therefore
-explains the restriction inside the sheet and asks the user to long-press the
-configuration box and choose Paste, which the system performs on a user gesture.
+`getSystemPasteboard().getData()` — it throws. Both layouts therefore turn
+"Import from clipboard" into a box the system pastes into on a user gesture: the
+wide page sets a hint above its editor, and the phone's add sheet switches to the
+box in place (`pasteMode`) rather than closing and reopening a sheet, which the
+sheet animation does not survive. A refusal is written to the trace as
+`import: clipboard read refused (<code>)`; the wording "The clipboard is empty"
+is gone, because it sent people looking for a copy that had in fact worked, and a
+config that does not parse is reported inside the sheet, where the toast behind a
+sheet would never be seen.
 
 Installing needs an explicit VPN consent: the first
 `startVpnExtensionAbility()` call raises the system dialog. The extension runs as
@@ -1198,7 +1204,7 @@ pwsh -File tools/run_host_tests.ps1
 | `tools/keepalive_probe.c` | an idle tunnel on a host whose clock is past 180 s: a persistent keepalive from the handshake on, with no data packet first, and the socket retry loop after a name stops resolving | keepalive on an idle session, retries re-armed |
 | `tools/recycle_probe.c` | a socket recycle whose re-resolve fails after a healthy socket existed: the fd is released so `engine_tick()` retries instead of leaving an unresolved tunnel with a live-looking socket | failed recycle releases the fd, retries continue |
 | `tools/jsontest.cpp` | the base64/flat-JSON configuration bridge that `open()` relies on, including the `peerCount` / `peerN<Field>` hand-off | 33 checks, 0 failures |
-| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, that connecting asks for the notification permission while a refusal is never reported as a failed start, and that `automatic` follows a system appearance change while the app runs instead of at the next restart, and that the bottom bar keeps its shape on a tablet or a 2-in-1 window and follows the window as it is resized, and that the About row and the licence list take the version from the package instead of a literal beside them | 172 checks, 0 failures |
+| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, that connecting asks for the notification permission while a refusal is never reported as a failed start, and that `automatic` follows a system appearance change while the app runs instead of at the next restart, and that the bottom bar keeps its shape on a tablet or a 2-in-1 window and follows the window as it is resized, and that the About row and the licence list take the version from the package instead of a literal beside them, and that a refused clipboard read opens a box to paste into rather than claiming the clipboard is empty | 176 checks, 0 failures |
 
 Screens checked on the emulator after the last build:
 

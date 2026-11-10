@@ -796,9 +796,7 @@ struct Index {
       this.loadIntoEditor(parsed, 'Pasted configuration loaded');
     } catch (e) {
       hilog.warn(DOMAIN, TAG, `clipboard read failed: ${JSON.stringify(e)}`);
-      this.editorHint = 'HarmonyOS only lets apps read the clipboard with a system ' +
-        'permission, so this button cannot work. Long-press the box below and choose ' +
-        'Paste instead.';
+      this.editorHint = Tr.t('Paste the configuration into the box below instead');
     }
   }
 
