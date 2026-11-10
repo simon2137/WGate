@@ -316,7 +316,12 @@ export function parseWgQuick(text: string, fallbackName: string): WgTunnel | nul
   if (!sawPeerKey || !sawPrivateKey || t.peers.length === 0) {
     return null;
   }
-  t.name = fallbackName;
+  // A configuration that carries no name of its own is named after the host it
+  // connects to: language-neutral, and the same words the row already prints
+  // under the title ("via 123.249.6.161"). A configuration without an endpoint
+  // keeps the caller's fallback, so the row is never blank.
+  const host: string = t.peers[0].host.trim();
+  t.name = host.length > 0 ? host : fallbackName;
   t.id = Date.now().toString();
   return t;
 }

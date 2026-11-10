@@ -878,14 +878,20 @@ check('a refusal is read inside the sheet, not in a toast it covers',
 
 # 30. A scanned configuration used to be named "Scanned tunnel" in every
 #     language, so the row and the toast after a scan stayed English while the
-#     file and clipboard paths named it through the catalogue.
+#     file and clipboard paths named it through the catalogue. Nameless
+#     configurations are now named after the endpoint host, which is
+#     language-neutral and repeats what the row already says underneath.
 scan_page = (ROOT / 'entry/src/main/ets/pages/Scan.ets').read_text(encoding='utf-8')
+tunnel_model = (ROOT / 'entry/src/main/ets/model/Tunnel.ets').read_text(encoding='utf-8')
 check('a scanned tunnel is named in the interface language',
       "parseWgQuick(text, Tr.t('Imported configuration'))" in scan_page
       and "'Scanned tunnel'" not in scan_page)
 check('every import path names a nameless configuration the same way',
       scan_page.count("Tr.t('Imported configuration')") == 1
       and home_page.count("Tr.t('Imported configuration')") == 3)
+check('a nameless configuration is named after the host it connects to',
+      'const host: string = t.peers[0].host.trim();' in tunnel_model
+      and 't.name = host.length > 0 ? host : fallbackName;' in tunnel_model)
 
 if failures:
     print('keep-alive audit:')
