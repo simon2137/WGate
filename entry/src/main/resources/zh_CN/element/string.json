@@ -19,6 +19,34 @@
     {
       "name": "permission_location_reason",
       "value": "读取当前 Wi-Fi 名称以触发自动隧道"
+    },
+    {
+      "name": "card_display_name",
+      "value": "隧道状态"
+    },
+    {
+      "name": "card_description",
+      "value": "不打开应用也能看到隧道、流量，并一键开关"
+    },
+    {
+      "name": "card_extension_desc",
+      "value": "WGate 桌面卡片"
+    },
+    {
+      "name": "card_config_title",
+      "value": "卡片隧道"
+    },
+    {
+      "name": "card_config_subtitle",
+      "value": "这张卡片显示与切换的隧道"
+    },
+    {
+      "name": "card_config_follow",
+      "value": "跟随当前隧道"
+    },
+    {
+      "name": "card_config_follow_desc",
+      "value": "显示正在运行或上次使用的隧道"
     }
   ]
 }

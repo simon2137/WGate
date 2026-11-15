@@ -23,6 +23,7 @@
     "pages/License",
     "pages/Privacy",
     "pages/Index",
-    "pages/Scan"
+    "pages/Scan",
+    "pages/CardConfig"
   ]
 }

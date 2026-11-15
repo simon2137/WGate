@@ -1,6 +1,7 @@
 import { AbilityConstant, Configuration, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
-import { window, display } from '@kit.ArkUI';
+import { rpc } from '@kit.IPCKit';
+import { window, display, router } from '@kit.ArkUI';
 import { vpnExtension } from '@kit.NetworkKit';
 import { BusinessError, deviceInfo } from '@kit.BasicServicesKit';
 import wgcore from 'libwgcore.so';
@@ -15,11 +16,29 @@ import { TunnelGuard } from '../service/TunnelGuard';
 import { PcTray } from '../service/PcTray';
 import { toggleTunnel as toggleTunnelCommand } from '../service/TunnelCommands';
 import { startTunnel } from '../service/VpnControl';
+import { CardRefresh } from '../form/CardRefresh';
 import { withTimeout, isTimeout } from '../util/Async';
 
 const TAG: string = 'WgTunnel';
 const ACTION_TOGGLE: string = 'com.wgate.app.action.TOGGLE_TUNNEL';
 const EXT_ABILITY: string = 'WgVpnExtAbility';
+/** The method name the desktop card's "call" action asks for (see form/WgCard.ets). */
+const CARD_TOGGLE: string = 'cardToggle';
+
+/**
+ * What a callee handler has to hand back. The card's call action is a one-way
+ * request — the switch only needs the palette repainted — so the reply is empty
+ * and only exists because `CalleeCallback` is typed to return a Parcelable.
+ */
+class CardReply implements rpc.Parcelable {
+  marshalling(messageSequence: rpc.MessageSequence): boolean {
+    return true;
+  }
+
+  unmarshalling(messageSequence: rpc.MessageSequence): boolean {
+    return true;
+  }
+}
 
 function param(params: Record<string, Object> | undefined, key: string): string {
   if (params === undefined) {
@@ -37,12 +56,22 @@ export default class EntryAbility extends UIAbility {
   // minimises it instead of letting the close end the app, and its 打开主界面
   // entry has to show the window again (see watchCloseButton below).
   private stage: window.WindowStage | null = null;
+  /**
+   * The card the launcher asked to edit, if this launch is the card's long-press
+   * "编辑" entry: the id cannot be routed before the page stack exists, so it is
+   * parked here until onWindowStageCreate has loaded Home.
+   */
+  private pendingCardEdit: string = '';
 
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     hilog.info(0x0000, TAG, 'EntryAbility onCreate');
     Diag.write(`app: created for ${want.action === undefined ? 'no action' : want.action}`);
     TunnelStore.init(this.context);
     Diag.init(this.context);
+    // The desktop card's switch runs in this process: a "call" action starts the
+    // ability in the background and asks for a method by name, which is how the
+    // card flips the tunnel without putting a window in front of the user.
+    this.watchCardActions();
     // Watches the published snapshot and rebuilds a tunnel the system took away
     // while this process is still schedulable (see service/TunnelGuard.ets).
     TunnelGuard.start();
@@ -52,6 +81,8 @@ export default class EntryAbility extends UIAbility {
     if (want.action === ACTION_TOGGLE) {
       this.quickAction();
     }
+    // The launcher's card "编辑" entry arrives here with the edited card's id.
+    this.pendingCardEdit = param(want.parameters, 'formId');
   }
 
   onNewWant(want: Want, launchParam: AbilityConstant.LaunchParam): void {
@@ -60,6 +91,13 @@ export default class EntryAbility extends UIAbility {
     // windows; starting the ability again is a request to look at it.
     this.raiseWindow();
     if (this.importTunnel(want)) {
+      return;
+    }
+    const editing: string = param(want.parameters, 'formId');
+    if (editing.length > 0) {
+      // The app is already up, so the page stack exists and the editor can open
+      // straight away instead of waiting for a window stage.
+      this.openCardEditor(editing);
       return;
     }
     if (want.action === ACTION_TOGGLE) {
@@ -131,8 +169,34 @@ export default class EntryAbility extends UIAbility {
       .catch((err: BusinessError) => {
         hilog.error(0x0000, TAG, `import connect failed: ${err.code} ${err.message}`);
         TunnelStore.setLastError(isTimeout(err) ?
-          'The system did not confirm the WireGuard request' : `Could not start WireGuard (${err.code})`);
+          'The system did not confirm the WireGuard request' : `Could not start WireGuard (${err.code})`,
+          tunnel.name, tunnel.id);
       });
+  }
+
+  /**
+   * Opens the card's tunnel picker for the card the launcher handed over.
+   *
+   * The page reads the id from its router params, writes the binding through
+   * CardRegistry and closes itself; nothing about the choice is kept here.
+   */
+  private openCardEditor(formId: string, delayMs: number = 0): void {
+    this.pendingCardEdit = '';
+    Diag.write(`app: editing card ${formId}`);
+    const open = (): void => {
+      router.pushUrl({ url: 'pages/CardConfig', params: { formId: formId } })
+        .catch((err: BusinessError) => {
+          hilog.warn(0x0000, TAG, `card editor failed: ${err.message}`);
+        });
+    };
+    // On a cold launch the editor is asked for from inside loadContent's
+    // callback, before Home has finished its first layout; replacing the stack
+    // there threw the editor away. A moment later it sticks.
+    if (delayMs > 0) {
+      setTimeout(open, delayMs);
+      return;
+    }
+    open();
   }
 
   /**
@@ -142,7 +206,74 @@ export default class EntryAbility extends UIAbility {
    * which tunnel they act on.
    */
   private quickAction(): void {
-    toggleTunnelCommand('launcher shortcut');
+    toggleTunnelCommand('launcher shortcut').catch((err: Error) => {
+      hilog.warn(0x0000, TAG, `quick action failed: ${err.message}`);
+    });
+    CardRefresh.settle(this.context);
+    // Same two pushes the card's own switch gets: this is the identical action
+    // reaching the app by another door, and the card on the desktop must follow.
+    CardRefresh.soon(this.context);
+  }
+
+  /**
+   * Registers the method the desktop card's switch calls.
+   *
+   * `postCardAction({action:'call'})` starts this ability without scheduling it
+   * to the foreground and then invokes the method named in the action's params.
+   * The card asks for `cardToggle`; the tunnel is picked by the same helper the
+   * launcher shortcut and the tray use, so all three surfaces act on one tunnel.
+   * The cards are refreshed here rather than inside the card because only this
+   * process can see the tunnel store and the extension's snapshot.
+   *
+   * What the card shows while the request is in flight ("connecting") and after
+   * it answers (a failure lasts two minutes) is decided in form/CardData.ets.
+   */
+  private watchCardActions(): void {
+    try {
+      this.callee.on(CARD_TOGGLE, (data: rpc.MessageSequence) => {
+        // The card names the tunnel it is showing; without it a card that read
+        // "failed: Office" would retry whichever tunnel came first in the list.
+        const tunnelId: string = this.cardTunnelId(data);
+        Diag.write(`app: the desktop card asked to toggle ${tunnelId.length > 0 ? tunnelId : 'the current'} tunnel`);
+        // One push now so the tap is answered immediately, one when the request
+        // has resolved so the card ends on the truth rather than on "connecting".
+        CardRefresh.after(this.context, 700);
+        toggleTunnelCommand('the desktop card', tunnelId)
+          .then(() => {
+            CardRefresh.all(this.context);
+            CardRefresh.settle(this.context);
+          })
+          .catch((err: Error) => {
+            hilog.warn(0x0000, TAG, `card toggle failed: ${err.message}`);
+            CardRefresh.all(this.context);
+          });
+        return new CardReply();
+      });
+    } catch (err) {
+      hilog.warn(0x0000, TAG, `card action registration failed: ${(err as BusinessError).message}`);
+    }
+  }
+
+  /**
+   * The tunnel id a card's "call" carried, '' when the payload cannot be read.
+   *
+   * `postCardAction` hands the params object to the callee as one JSON string.
+   * A card built before this field existed simply answers '' and the generic
+   * order in service/TunnelCommands.ets applies — the tap still does something
+   * sensible instead of failing.
+   */
+  private cardTunnelId(data: rpc.MessageSequence): string {
+    try {
+      const text: string = data.readString();
+      const parsed = JSON.parse(text) as Record<string, Object>;
+      const value: Object | undefined = parsed['tunnelId'];
+      if (value === undefined || value === null) {
+        return '';
+      }
+      return value.toString();
+    } catch (err) {
+      return '';
+    }
   }
 
   /**
@@ -232,6 +363,10 @@ export default class EntryAbility extends UIAbility {
       PcTray.attach(this.context).catch((err: Error) => {
         hilog.warn(0x0000, TAG, `tray attach failed: ${err.message}`);
       });
+      // A launch that came from a card's "编辑" menu only has a page stack now.
+      if (this.pendingCardEdit.length > 0) {
+        this.openCardEditor(this.pendingCardEdit, 400);
+      }
     });
   }
 
@@ -320,6 +455,9 @@ export default class EntryAbility extends UIAbility {
     // are what say whether the app asked for the tunnel again or left it alone.
     const alive: string = publishedTunnelId();
     Diag.write(`app: foreground, published tunnel ${alive.length > 0 ? alive : 'none'}`);
+    // Whatever changed while the window was away, the cards on the desktop are
+    // showing the state from before it.
+    CardRefresh.soon(this.context);
     PcTray.sync(true).catch((err: Error) => {
       hilog.warn(0x0000, TAG, `tray sync failed: ${err.message}`);
     });

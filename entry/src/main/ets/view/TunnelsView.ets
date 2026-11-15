@@ -17,6 +17,7 @@ import { TunnelStore } from '../service/TunnelStore';
 import { SettingsStore } from '../service/SettingsStore';
 import { Diag } from '../util/Diag';
 import { Tr } from '../i18n/Tr';
+import { CardRefresh } from '../form/CardRefresh';
 import { sheetWillDismiss } from '../components/SheetGestures';
 
 const SHEET_NONE: string = '';
@@ -398,6 +399,9 @@ export struct TunnelsView {
     this.busyId = '';
     this.epoch++;
     this.refresh();
+    // The card on the desktop shows the same tunnel; without this it keeps the
+    // state it had when it was last drawn.
+    CardRefresh.soon(getContext(this) as common.UIAbilityContext);
   }
 
   @Builder
@@ -637,6 +641,20 @@ export struct TunnelsView {
       }
       this.toggleCollapsed(name);
     })
+  }
+
+  /**
+   * What makes one row listable as itself.
+   *
+   * `ForEach` keeps a row when its key is unchanged and only rebuilds it when the
+   * key differs, so a key of "id + epoch" survived a rename: the store had the
+   * new name, the row kept painting the old one until the tab was left and
+   * re-entered. Everything the row paints from the configuration is part of the
+   * key; the live counters deliberately are not, or every tick would rebuild the
+   * list.
+   */
+  private rowKey(tunnel: WgTunnel): string {
+    return `${tunnel.id}|${tunnel.name}|${tunnel.group}|${tunnel.endpoint()}|${this.epoch}`;
   }
 
   /** `GroupActionsSheet.kt`: rename, export, delete the group or delete both. */
@@ -1068,7 +1086,7 @@ export struct TunnelsView {
                 if (!this.isCollapsed(name)) {
                   ForEach(this.inGroup(name), (tunnel: WgTunnel) => {
                     this.tunnelRow(tunnel, true);
-                  }, (tunnel: WgTunnel) => tunnel.id + this.epoch.toString())
+                  }, (tunnel: WgTunnel) => this.rowKey(tunnel))
                 }
               }
               .width('100%')
@@ -1079,7 +1097,7 @@ export struct TunnelsView {
             ListItem() {
               this.tunnelRow(tunnel, false);
             }
-          }, (tunnel: WgTunnel) => tunnel.id + this.epoch.toString())
+          }, (tunnel: WgTunnel) => this.rowKey(tunnel))
         }
         .width('100%')
         .layoutWeight(1)

@@ -21,6 +21,7 @@ import { TunnelNotice, TunnelNoticeText } from '../service/TunnelNotice';
 import { SettingsStore } from '../service/SettingsStore';
 import { Tr } from '../i18n/Tr';
 import { offeredLocale } from '../i18n/Locales';
+import { CardRefresh } from '../form/CardRefresh';
 
 const DOMAIN: number = 0x0001;
 const TAG: string = 'WgVpnExt';
@@ -67,6 +68,8 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
   private lastWant: Want | null = null;
   private retriedCreate: boolean = false;
   private startedAt: number = 0;
+  /** The last state the desktop cards were told about, so a change reaches them once. */
+  private cardState: string = '';
   private handshakeSeen: boolean = false;
   private handshakeWarned: boolean = false;
   private engineLogSeen: number = 0;
@@ -331,6 +334,23 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
    * process — the only one of the two the system still schedules while the
    * screen is off. Written on every watchdog tick.
    */
+  /**
+   * Tells the desktop cards about a new state.
+   *
+   * Best effort and fire-and-forget: the watchdog must not wait on the form
+   * framework, and a device with no cards placed answers with an empty registry.
+   */
+  private pushCards(state: string): void {
+    if (state === this.cardState) {
+      return;
+    }
+    this.cardState = state;
+    CardRefresh.fromService(this.context, this.context.config.colorMode)
+      .catch((err: Error) => {
+        hilog.warn(DOMAIN, TAG, `card update failed: ${err.message}`);
+      });
+  }
+
   private publishStatus(status: EngineStatusWire): void {
     const tunnel = this.tunnel;
     if (tunnel === null) {
@@ -345,6 +365,7 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
     const age: number = this.lastHandshakeAt === 0 ? 0 : Date.now() - this.lastHandshakeAt;
     const snapshot: BridgeStatus = {
       id: tunnel.id,
+      name: tunnel.name,
       state: status.state,
       rxBytes: status.rxBytes,
       txBytes: status.txBytes,
@@ -362,6 +383,10 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
     snapshot.notified = notice !== null;
     StatusBridge.publish(snapshot);
     TunnelNotice.show(notice);
+    // The cards are on the desktop, not in this process' memory: a tunnel that
+    // comes up has to say so, or the card sits on "connecting" until the app is
+    // opened. Only a change is pushed -- the counters tick every two seconds.
+    this.pushCards(snapshot.state);
   }
 
   /**
@@ -457,13 +482,17 @@ export default class WgVpnExtAbility extends VpnExtensionAbility {
     }
     if (this.tunnel !== null) {
       const going: string = this.tunnel.id;
+      // Kept for the surfaces that title themselves from the snapshot: once the
+      // tunnel is down its name is the only thing worth remembering.
+      const title: string = this.tunnel.name;
       TunnelStore.setActive('');
       this.tunnel = null;
       StatusBridge.publish({
-        id: going, state: 'stopped', rxBytes: 0, txBytes: 0, rxPackets: 0, txPackets: 0,
+        id: going, name: title, state: 'stopped', rxBytes: 0, txBytes: 0, rxPackets: 0, txPackets: 0,
         peersUp: 0, peerCount: 0, handshakeAgeMs: 0, udpFd: -1, updated: Date.now(),
         session: 0, notified: false
       });
+      this.pushCards('stopped');
     }
   }
 

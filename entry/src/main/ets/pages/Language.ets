@@ -5,6 +5,7 @@ import { SectionHeader } from '../components/SurfaceRow';
 import { SettingsStore } from '../service/SettingsStore';
 import { Tr } from '../i18n/Tr';
 import { offeredLocale } from '../i18n/Locales';
+import { CardRefresh } from '../form/CardRefresh';
 
 interface LocaleOption {
   value: string;
@@ -125,6 +126,9 @@ struct Language {
               SettingsStore.setLanguage(option.value);
               Tr.setLocale(option.value);
               reloadUi();
+              // The desktop card speaks this language too; it only learns about
+              // the change when the app pushes new binding data.
+              CardRefresh.soon(getContext(this) as common.UIAbilityContext);
             })
           }, (option: LocaleOption) => option.value)
 

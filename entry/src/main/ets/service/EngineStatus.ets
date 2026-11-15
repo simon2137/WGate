@@ -118,17 +118,35 @@ export function stateLabel(state: string): string {
   return Tr.t('Disconnected');
 }
 
+/**
+ * One decimal, unless it is a zero one.
+ *
+ * "340.0 KB" is wider and noisier than "340 KB", and on a card the difference
+ * shows: the counters sit next to each other, so a trailing ".0" pushes the row
+ * into an ellipsis for no information. Same value, fewer characters.
+ */
+function trimmed(value: number, digits: number): string {
+  let text: string = value.toFixed(digits);
+  while (text.endsWith('0')) {
+    text = text.substring(0, text.length - 1);
+  }
+  if (text.endsWith('.')) {
+    text = text.substring(0, text.length - 1);
+  }
+  return text;
+}
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) {
     return `${bytes} B`;
   }
   if (bytes < 1024 * 1024) {
-    return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${trimmed(bytes / 1024, 1)} KB`;
   }
   if (bytes < 1024 * 1024 * 1024) {
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${trimmed(bytes / (1024 * 1024), 1)} MB`;
   }
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+  return `${trimmed(bytes / (1024 * 1024 * 1024), 2)} GB`;
 }
 
 /** "12s ago" / "3m ago" / "2h ago" for a CLOCK_MONOTONIC-free timestamp. */

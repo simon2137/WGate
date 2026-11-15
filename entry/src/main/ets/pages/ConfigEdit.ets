@@ -8,6 +8,7 @@ import { SettingsStore } from '../service/SettingsStore';
 import { TunnelStore } from '../service/TunnelStore';
 import { WgTunnel, WgPeer, toWgQuick } from '../model/Tunnel';
 import { Diag } from '../util/Diag';
+import { CardRefresh } from '../form/CardRefresh';
 import { Tr } from '../i18n/Tr';
 
 /** One labelled input, matching the reference's ConfigurationTextBox. */
@@ -283,6 +284,9 @@ struct ConfigEdit {
     Diag.write(`config-edit: ${creating ? 'created' : 'saved'} ${t.name} ` +
       `(${toWgQuick(t).split('\n').length} lines)`);
     this.flash(Tr.t('Configuration saved'));
+    // A rename (or any other edit) is what the desktop card titles itself with,
+    // so the card is repushed from this process, which has the new store.
+    CardRefresh.soon(getContext(this) as common.UIAbilityContext);
     router.back();
   }
 

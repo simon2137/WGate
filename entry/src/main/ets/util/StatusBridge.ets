@@ -19,6 +19,14 @@ const FILE_NAME: string = 'vpn_status.json';
 
 export interface BridgeStatus {
   id: string;
+  /**
+   * The name the user gave the tunnel.
+   *
+   * Surfaces outside the app's own process (the desktop card runs in the form
+   * extension process) cannot read the tunnel store reliably, so the publisher
+   * puts the title into the snapshot instead of making them guess.
+   */
+  name: string;
   state: string;
   rxBytes: number;
   txBytes: number;

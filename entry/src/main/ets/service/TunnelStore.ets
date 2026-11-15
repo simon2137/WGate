@@ -14,6 +14,9 @@ const KEY_LIST: string = 'tunnels';
 const KEY_ACTIVE: string = 'active_id';
 const KEY_DESIRED: string = 'desired_id';
 const KEY_LAST_ERROR: string = 'last_error';
+const KEY_LAST_ERROR_AT: string = 'last_error_at';
+const KEY_LAST_ERROR_TUNNEL: string = 'last_error_tunnel';
+const KEY_LAST_ERROR_TUNNEL_ID: string = 'last_error_tunnel_id';
 
 export class TunnelStore {
   private static store: preferences.Preferences | null = null;
@@ -127,9 +130,39 @@ export class TunnelStore {
     return TunnelStore.ensure().getSync(KEY_LAST_ERROR, '') as string;
   }
 
-  static setLastError(message: string): void {
+  /**
+   * When the last failure was recorded, 0 while there is none.
+   *
+   * A message alone cannot say whether it describes the request the user just
+   * made or one from last week; the desktop card needs that difference to decide
+   * between showing a failure and showing an idle tunnel.
+   */
+  static lastErrorAt(): number {
+    return TunnelStore.ensure().getSync(KEY_LAST_ERROR_AT, 0) as number;
+  }
+
+  /**
+   * The tunnel the last failure belongs to, '' when it is not known.
+   *
+   * A surface that says "failed" has to name what failed: the requested tunnel
+   * is cleared as soon as the request is refused, so the id cannot be recovered
+   * from the store afterwards.
+   */
+  static lastErrorTunnel(): string {
+    return TunnelStore.ensure().getSync(KEY_LAST_ERROR_TUNNEL, '') as string;
+  }
+
+  /** The id behind lastErrorTunnel, so a retry can name the same tunnel. */
+  static lastErrorTunnelId(): string {
+    return TunnelStore.ensure().getSync(KEY_LAST_ERROR_TUNNEL_ID, '') as string;
+  }
+
+  static setLastError(message: string, tunnelName: string = '', tunnelId: string = ''): void {
     const store = TunnelStore.ensure();
     store.putSync(KEY_LAST_ERROR, message);
+    store.putSync(KEY_LAST_ERROR_AT, message.length === 0 ? 0 : Date.now());
+    store.putSync(KEY_LAST_ERROR_TUNNEL, message.length === 0 ? '' : tunnelName);
+    store.putSync(KEY_LAST_ERROR_TUNNEL_ID, message.length === 0 ? '' : tunnelId);
     store.flush();
   }
 }

@@ -4,6 +4,7 @@ import { Palette, Type, ROW_PAD_H, BAR_SPACE, FONT, applySchemeAndReload, resolv
 import { SectionHeader } from '../components/SurfaceRow';
 import { SettingsStore } from '../service/SettingsStore';
 import { Tr } from '../i18n/Tr';
+import { CardRefresh } from '../form/CardRefresh';
 
 interface ThemeOption {
   value: string;
@@ -110,6 +111,9 @@ struct Display {
               // Paint immediately: every screen subscribes to the tick that
               // applyScheme bumps, so the page behind this one is repainted too.
               applySchemeAndReload(resolveTheme(option.value, getContext(this) as common.UIAbilityContext));
+              // The card paints the same palette, so it is repushed with the
+              // new scheme instead of waiting for the launcher's next tick.
+              CardRefresh.soon(getContext(this) as common.UIAbilityContext);
             })
           }, (option: ThemeOption) => option.value)
 

@@ -98,6 +98,23 @@
           "ohos.permission.INTERNET"
         ],
         "exported": true
+      },
+      {
+        // The desktop card. Its metadata points at resources/base/profile/wg_card.json,
+        // which is where the three sizes and the refresh interval are declared;
+        // the page itself is ets/form/WgCard.ets. A card is not a window: it
+        // renders the snapshot the VPN extension publishes, and its switch asks
+        // the app to flip the tunnel through a "call" action (see WgCard.ets).
+        "name": "WgCardAbility",
+        "srcEntry": "./ets/form/WgCardAbility.ets",
+        "description": "$string:card_extension_desc",
+        "type": "form",
+        "metadata": [
+          {
+            "name": "ohos.extension.form",
+            "resource": "$profile:wg_card"
+          }
+        ]
       }
     ]
   }

@@ -41,7 +41,7 @@ export async function startTunnel(tunnel: WgTunnel): Promise<string> {
     TunnelStore.setDesired('');
     const message: string = isTimeout(e) ?
       'The system did not confirm the WireGuard request' : `Could not start WireGuard (${e.code})`;
-    TunnelStore.setLastError(message);
+    TunnelStore.setLastError(message, tunnel.name, tunnel.id);
     return message;
   }
 }

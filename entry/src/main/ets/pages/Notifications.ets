@@ -7,6 +7,7 @@ import { Palette, Type, ROW_PAD_H, BAR_SPACE , FONT} from '../theme/Theme';
 import { SurfaceRow, SectionHeader } from '../components/SurfaceRow';
 import { SettingsStore } from '../service/SettingsStore';
 import { Tr } from '../i18n/Tr';
+import { CardRefresh } from '../form/CardRefresh';
 
 const DOMAIN: number = 0x0001;
 const TAG: string = 'Notifications';
@@ -147,6 +148,9 @@ struct Notifications {
             onSwitch: (on: boolean) => {
               this.origin = on;
               SettingsStore.setNotification('origin', on);
+              // The card's source line is this switch, so it has to be redrawn
+              // the moment the switch moves.
+              CardRefresh.soon(getContext(this) as common.UIAbilityContext);
             }
           })
           SurfaceRow({

@@ -19,6 +19,34 @@
     {
       "name": "permission_location_reason",
       "value": "Read the current Wi-Fi name to trigger automatic tunnels"
+    },
+    {
+      "name": "card_display_name",
+      "value": "Tunnel status"
+    },
+    {
+      "name": "card_description",
+      "value": "The tunnel, its traffic and its switch, without opening the app"
+    },
+    {
+      "name": "card_extension_desc",
+      "value": "WGate desktop card"
+    },
+    {
+      "name": "card_config_title",
+      "value": "Card tunnel"
+    },
+    {
+      "name": "card_config_subtitle",
+      "value": "The tunnel this card shows and switches"
+    },
+    {
+      "name": "card_config_follow",
+      "value": "Follow the current tunnel"
+    },
+    {
+      "name": "card_config_follow_desc",
+      "value": "Show whichever tunnel is running or was used last"
     }
   ]
 }
