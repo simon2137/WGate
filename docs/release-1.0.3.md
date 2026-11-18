@@ -20,9 +20,9 @@
 
 ## English
 
-1. Fixed the desktop card that sometimes claimed "Connecting…": a card that is not connecting no longer says it is, and a card no longer switches to a different size on its own.
-2. Fixed the 2×4 card layout: the connect action no longer jumps to the right edge in 2×4, so all three sizes look the same; tap the switch to connect or disconnect without opening the app.
-3. New: name a tunnel while adding it. After pasting a configuration, importing a .conf / .zip, or scanning a code, a naming sheet appears — type a name and tap the save icon at the top right. Leave it empty (or dismiss the sheet) and the tunnel takes its endpoint address as the name; the sheet says so. Creating a tunnel by hand still goes through the tunnel editor.
-4. Tidied several sheets: naming a tunnel, Default DNS, tunnel configuration, paste configuration, reorder, move to group and group actions now share one shape — save icon at the top right, sized to its content, the same bottom spacing — and the option rows are tighter.
+1. Fixed cards that sometimes said "Connecting…" when nothing was connecting, and cards no longer change size by themselves.
+2. Fixed the 2×4 card: the connect action no longer jumps to the right edge, so all three sizes match. Tap the switch to connect without opening the app.
+3. New: name a tunnel while adding it. Paste a configuration, import a .conf/.zip or scan a code, then type a name and tap the save icon. Leave it empty and the tunnel is named after its endpoint; the sheet says so.
+4. Tidied several sheets (naming, Default DNS, tunnel configuration, paste, reorder, group actions): one save icon at the top right, sized to their content, one bottom spacing, tighter rows.
 
-If you run into any problem or have a suggestion, email the author (273156878@qq.com). Thank you for using WGate!
+Questions or suggestions? Email the author (273156878@qq.com). Thanks for using WGate!
