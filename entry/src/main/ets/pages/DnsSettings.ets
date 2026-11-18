@@ -85,6 +85,15 @@ struct DnsSettings {
       .width('100%')
       .padding({ left: 24, right: 24, top: 8, bottom: 12 })
 
+      // The help sits above the field, the way the naming sheet does it: the
+      // keyboard rises over the bottom of a bottom sheet, and this line is the
+      // only place the inheritance rule is explained.
+      Text(Tr.t('A tunnel that has no DNS line in its configuration inherits this value.'))
+        .fontSize(Type.BODY_SMALL)
+        .fontFamily(FONT)
+        .fontColor(Palette.MUTED)
+        .padding({ left: 24, right: 24, bottom: 10 })
+
       TextInput({ placeholder: '1.1.1.1, 8.8.8.8', text: this.draft })
         .height(48)
         .margin({ left: 24, right: 24 })
@@ -94,16 +103,11 @@ struct DnsSettings {
         .onChange((text: string) => {
           this.draft = text;
         })
-
-      Text(Tr.t('A tunnel that has no DNS line in its configuration inherits this value.'))
-        .fontSize(Type.BODY_SMALL)
-        .fontFamily(FONT)
-        .fontColor(Palette.MUTED)
-        .padding({ left: 24, right: 24, top: 12 })
-      Blank()
     }
+    // `SheetSize.FIT_CONTENT`: the body sizes itself; no `Blank()` and no
+    // `height('100%')` — those filled two thirds of a half-height sheet with air.
     .width('100%')
-    .height('100%')
+    .padding({ bottom: 48 })
     .backgroundColor(Palette.BACKGROUND)
   }
 
@@ -179,7 +183,7 @@ struct DnsSettings {
     .height('100%')
     .backgroundColor(Palette.BACKGROUND)
     .bindSheet(this.sheet, this.editSheet(), {
-      height: SheetSize.MEDIUM,
+      height: SheetSize.FIT_CONTENT,
       dragBar: true,
       preferType: SheetType.BOTTOM,
       showClose: false,

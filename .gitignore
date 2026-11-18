@@ -52,3 +52,9 @@ signing/
 
 # DevEco preview cache (generated, not source)
 .preview/
+
+# JiuwenSwarm runtime file operation logs
+.agent_history/
+
+# internal task packs, fixtures and evidence screenshots (not product source)
+.shared/

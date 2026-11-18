@@ -118,10 +118,11 @@ struct TunnelGlobals {
       // reads as itself in every interface, as MTU and DNS already do.
       this.fieldRow('keepalive', this.keepalive, 'keepalive')
       this.fieldRow('DNS', this.dns, 'dns')
-      Blank()
     }
+    // `SheetSize.FIT_CONTENT`: the three rows are the whole sheet, so it sizes
+    // itself instead of standing half a screen tall with `Blank()` underneath.
     .width('100%')
-    .height('100%')
+    .padding({ bottom: 48 })
     .backgroundColor(Palette.BACKGROUND)
   }
 
@@ -196,7 +197,7 @@ struct TunnelGlobals {
     .height('100%')
     .backgroundColor(Palette.BACKGROUND)
     .bindSheet(this.sheet, this.configSheet(), {
-      height: SheetSize.MEDIUM,
+      height: SheetSize.FIT_CONTENT,
       dragBar: true,
       preferType: SheetType.BOTTOM,
       showClose: false,

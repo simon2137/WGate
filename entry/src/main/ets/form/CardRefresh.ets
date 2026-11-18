@@ -10,21 +10,37 @@
  *
  * The ids come from CardRegistry, a file both processes can read; this class
  * runs in the app process, where `formProvider.updateForm` is available.
+ *
+ * The registry also carries each card's layout, and a layout that is wrong is
+ * visible: the 2x2 page puts the switch in the bottom-right corner while the 2x4
+ * one puts it on the left. So before the first push of a process the sizes are
+ * reconciled with the launcher's own report, and a card whose size is still
+ * unknown is skipped instead of being repainted from a guess.
  */
 import { common } from '@kit.AbilityKit';
-import { formBindingData, formProvider } from '@kit.FormKit';
+import { formBindingData, formInfo, formProvider } from '@kit.FormKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { CardData } from './CardData';
 import { CardEntry, CardRegistry } from './CardRegistry';
+import { withTimeout } from '../util/Async';
 
 const DOMAIN: number = 0x0001;
 const TAG: string = 'CardRefresh';
 /** The snapshot a start request produces lands in about a second. */
 const EARLY_MS: number = 700;
 const LATE_MS: number = 3000;
+/**
+ * A push is what keeps a card truthful, so the size check in front of it is not
+ * allowed to hold the push for long: the launcher answers in milliseconds and a
+ * push that never happens is worse than one made from the registry as it is.
+ */
+const RECONCILE_MS: number = 1500;
 
 export class CardRefresh {
+  /** Whether this process has already taken the launcher's report of the sizes. */
+  private static sizesFresh: boolean = false;
+
   /** Every placed card gets the current state. Never throws. */
   static async all(context: common.UIAbilityContext): Promise<void> {
     await CardRefresh.push(context, context.config.colorMode);
@@ -43,6 +59,9 @@ export class CardRefresh {
   }
 
   private static async push(context: common.Context, colorMode: number | undefined): Promise<void> {
+    if (!CardRefresh.sizesFresh) {
+      await CardRefresh.reconcile();
+    }
     const forms: Record<string, CardEntry> = CardRegistry.list();
     const ids: string[] = Object.keys(forms);
     if (ids.length === 0) {
@@ -50,8 +69,17 @@ export class CardRefresh {
     }
     for (let i = 0; i < ids.length; i++) {
       const formId: string = ids[i];
+      const size: string = forms[formId].size;
+      if (!CardRegistry.knownSize(size)) {
+        // The layout decides where the switch sits, so a card whose size nobody
+        // has reported keeps the drawing it has rather than being repainted with
+        // a default that may be the wrong one. The launcher's next update fills
+        // the size in (see WgCardAbility.onUpdateForm).
+        hilog.warn(DOMAIN, TAG, `update ${formId} skipped, its size is unknown`);
+        continue;
+      }
       try {
-        const data: Record<string, Object> = CardData.build(context, forms[formId].size,
+        const data: Record<string, Object> = CardData.build(context, size,
           colorMode, forms[formId].tunnel);
         await formProvider.updateForm(formId, formBindingData.createFormBindingData(data));
         CardRefresh.nextTick(formId, data);
@@ -60,6 +88,30 @@ export class CardRefresh {
         // not worth breaking the refresh of the other cards over.
         hilog.warn(DOMAIN, TAG, `update ${formId} failed: ${(err as BusinessError).code}`);
       }
+    }
+  }
+
+  /**
+   * Takes the launcher's report of which cards are placed and how big they are.
+   *
+   * This is the one authority on the grid, so it repairs a registry entry an
+   * older build guessed (a 2x4 card recorded as 2x2, which paints the square
+   * layout) and adds a card the file never saw. It runs at most once per process,
+   * before the first push; a launcher that refuses leaves the registry as it is,
+   * and the push above skips whatever that leaves unknown.
+   */
+  private static async reconcile(): Promise<void> {
+    try {
+      const placed: formInfo.RunningFormInfo[] = await withTimeout(
+        formProvider.getPublishedRunningFormInfos(), RECONCILE_MS, 'card sizes');
+      const sizes: Record<string, string> = {};
+      for (let i = 0; i < placed.length; i++) {
+        sizes[placed[i].formId] = CardData.sizeOf(placed[i].dimension);
+      }
+      CardRegistry.reconcile(sizes);
+      CardRefresh.sizesFresh = true;
+    } catch (err) {
+      hilog.warn(DOMAIN, TAG, `card sizes not reconciled: ${(err as Error).message}`);
     }
   }
 

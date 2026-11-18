@@ -622,6 +622,43 @@ Three limits are worth stating, because they are the platform's and not choices:
   the same function the launcher shortcut uses — so a tray click and a shortcut
   can never act on different tunnels.
 
+### The desktop card
+
+The card is a form: three sizes (`1*2`, `2*2`, `2*4`) declared in
+`resources/base/profile/wg_card.json`, and one ArkTS page (`ets/form/WgCard.ets`)
+that reads `layout` out of its binding data and paints the compact, square or wide
+arrangement. A card runs a stripped runtime, so the page has no catalogue, no store
+and no engine of its own: every word and number arrives from `CardData`, built in
+whichever process asks.
+
+| Part | What it does |
+|---|---|
+| Built in | `WgCardAbility.onAddForm` (with the dimension the launcher hands over), `onUpdateForm` (the 30-minute refresh), `onSizeChanged` (a drag to another grid size), and `CardRefresh` in the app process after a switch is flipped |
+| Words | `CardData.build`: state line, tunnel name, endpoint, `↓ rx ↑ tx`, uptime and the bearer line, all from the snapshot the VPN extension publishes every two seconds |
+| Switch | `postCardAction({action:'call', method:'cardToggle'})`, so the tap starts the ability without a window; the rest of the card is a `router` action |
+| Pinning | Long press → Edit opens `pages/CardConfig`, which writes the tunnel id through `CardRegistry` |
+
+Two rules keep the card honest, and both were learned from a 2x4 card that showed
+"正在连接" with its switch in the bottom-right corner:
+
+- **The layout is never guessed.** The size picks one of three layouts, and only
+  the wide one puts the switch on the left. The launcher is the only authority on
+  it, so `onAddForm` records what it hands over, `onSizeChanged` follows a resize,
+  `onUpdateForm` asks `getPublishedRunningFormInfoById`, and `CardRefresh` reconciles
+  the shared `card_forms.json` with `getPublishedRunningFormInfos` before its first
+  push. A size nobody has reported stays `''` and the card keeps the drawing it
+  has. The old default (`2x2`) turned a wide card into the square page, and the gap
+  that made it possible was `CardRegistry.put` running before `Diag.init`: the file
+  is written through `Diag.directory()`, so a card added by a fresh process was
+  never recorded at all, and the next update filled the hole with the default.
+- **"Connecting" needs a request that is recent.** The card reads a desired id with
+  no fresh snapshot as "connecting". That is right for the second between the tap
+  and the extension's first publish, and wrong for a desire an earlier session left
+  behind: an extension the system reclaimed silently (no `onDestroy`) used to leave
+  every card promising a connection nobody was making. `setDesired` now stamps
+  `desired_at` and the reading expires after 60 s; what the store remembers is
+  unchanged, because the guard and the cold start still need it.
+
 ### The status notification
 
 One notification, id `1001`, `SERVICE_INFORMATION`, and a rule about who owns it:
@@ -1193,6 +1230,56 @@ configuration text on the way back. That last part needed `onPageShow()`: a
 page pops, so the first version showed the pre-edit text until the screen was
 reopened.
 
+### Naming a tunnel right after an import
+
+Three import paths create tunnels without ever asking what they are called — the
+clipboard box, the `.conf` / `.zip` picker and the QR scanner — and a list of six
+rows all named after their endpoints is not a list anyone can navigate. So each
+one now ends in the same sheet (`components/NameTunnelSheet.ets`), shaped like the
+"Default DNS" sheet every other setting uses: the title on the left, the save icon
+on the right, one field, and the sentence that says what the name will be if it is
+left empty. There is no confirm/cancel pair — the icon saves, and dragging the
+sheet away or the back key keeps the endpoint name — so the naming step is one
+gesture, not a decision between two buttons.
+
+`留空则按端点命名：<host>` is computed from the tunnel that was just stored, so
+the fallback is a name the user can read, not a rule they have to imagine. The
+content sits at the top of a compact sheet for the same reason the DNS sheet
+does: the keyboard rises over empty space instead of over the save icon.
+
+Three settings sheets share this one shape — 命名隧道, 默认 DNS (`DnsSettings`) and
+隧道配置 (`TunnelGlobals`): title on the left, save icon on the right, the help
+line above the fields, `SheetSize.FIT_CONTENT` with no `Blank()` and no
+`height('100%')`, and 48vp of air under the last field. A sheet that asks for one
+value does not need half a screen, and the save icon is the only exit — dragging
+the sheet away or the back key leaves the stored value untouched.
+
+The add-tunnel sheet's paste box is the exception, on purpose (`pasteHeader` in
+`Home.ets`): pasting means reading and correcting a block of text, so the save
+action stays a full-width button under the text area instead of an icon at the top.
+The header keeps only the title, and an empty box answers with 请先粘贴配置 instead
+of doing nothing. Its header is still a separate `@Builder` that reads `pasteMode`
+itself: a builder *parameter* is captured when the row is first built, and
+`pasteMode` flips only after the sheet is already up (the clipboard read can be
+refused) — passing it in rendered the old title while the body had already
+switched to the text box.
+
+| Rule | Why it is the way it is |
+|---|---|
+| Save writes the tunnel **first**, then asks | A killed app must not lose the import; the sheet only renames a tunnel that already exists, and dismissing it keeps the endpoint name |
+| An import that matches an existing tunnel (`PrivateKey` + endpoint) is not asked | The name the user gave it once is the one it keeps; the sheet would otherwise rename their "MyNAS" back to its endpoint |
+| A zip asks once per configuration, in file-name order | The archive's own order is whatever the zip tool wrote (`tunnels-5.zip` stores e,d,c,b,a); five questions in an order nobody can predict is impossible to follow, so the paths are sorted before the first one opens, and the next file is only imported after the previous answer |
+| The naming sheet opens from the add sheet's `onDisappear` | Both are bottoms sheets: opening the second while the first is still animating out loses the keyboard and the focus ring. The paste path queues the question and the sheet releases it |
+| Scan answers before `router.back()` | A sheet opened after the page is popped is attached to a destroyed page; `handling` stays true for the whole question so a late camera frame cannot import the same code twice |
+
+Two defects on that path predate this feature and are fixed with it: the picker
+hands over a `file://docs/...` URI that `copyFileSync` resolves as a path and
+fails with `ENOENT` (the archive is now copied through its own descriptor), and
+`zlib.decompressFile` refuses to create its destination (`900002: destination path
+is not an existing directory`), so the output directory is created first. On the
+API 26 emulator the zip import failed on both before the change and imports five
+configurations after it.
+
 ## Verification
 
 Everything except the ArkUI layer is host-testable. One command builds and runs
@@ -1211,7 +1298,7 @@ pwsh -File tools/run_host_tests.ps1
 | `tools/keepalive_probe.c` | an idle tunnel on a host whose clock is past 180 s: a persistent keepalive from the handshake on, with no data packet first, and the socket retry loop after a name stops resolving | keepalive on an idle session, retries re-armed |
 | `tools/recycle_probe.c` | a socket recycle whose re-resolve fails after a healthy socket existed: the fd is released so `engine_tick()` retries instead of leaving an unresolved tunnel with a live-looking socket | failed recycle releases the fd, retries continue |
 | `tools/jsontest.cpp` | the base64/flat-JSON configuration bridge that `open()` relies on, including the `peerCount` / `peerN<Field>` hand-off | 33 checks, 0 failures |
-| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, that connecting asks for the notification permission while a refusal is never reported as a failed start, and that `automatic` follows a system appearance change while the app runs instead of at the next restart, and that the bottom bar keeps its shape on a tablet or a 2-in-1 window and follows the window as it is resized, and that the About row and the licence list take the version from the package instead of a literal beside them, and that a refused clipboard read opens a box to paste into rather than claiming the clipboard is empty, and that every import path names a nameless configuration after its endpoint host instead of a literal | 179 checks, 0 failures |
+| `tools/check_keepalive.py` | static audit of the keep-alive design against the platform's rules: one VPN extension, the network watcher, the transient-task window and the hand-back inside its callback, `TunnelGuard`, the extension-side nudge, the cold-start reconciliation, the atomic snapshot, the desktop tray and its close-to-tray path, who publishes the status notification and which process resolves its language and switches, that a tunnel with no network is never labelled connected, that the recovery line needs a session that already worked, the two engine invariants the probes below prove by running, that the log page keeps no always-empty block and can export and clear its trace, that a restore parses wg-quick, skips records that cannot connect and reads the picked file through its descriptor, and that the support page links nowhere, the privacy policy is a page, a fresh install opens on Simplified Chinese and follows the system appearance, and keepalive stays untranslated, the tunnel list's confirmations come out of the catalogue rather than a template literal at the call site, that connecting asks for the notification permission while a refusal is never reported as a failed start, and that `automatic` follows a system appearance change while the app runs instead of at the next restart, and that the bottom bar keeps its shape on a tablet or a 2-in-1 window and follows the window as it is resized, and that the About row and the licence list take the version from the package instead of a literal beside them, and that a refused clipboard read opens a box to paste into rather than claiming the clipboard is empty, and that every import path names a nameless configuration after its endpoint host instead of a literal, and that the desktop card's layout comes from the launcher rather than from a guessed default (recorded when the card is placed, asked for when it is updated, followed when it is resized, reconciled before a push) | 187 checks, 0 failures |
 
 Screens checked on the emulator after the last build:
 

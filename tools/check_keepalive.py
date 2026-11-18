@@ -319,7 +319,7 @@ check('the tray menu can toggle the tunnel',
       'toggleTunnel(' in body(tray, 'onMenu'))
 check('the tray and the launcher shortcut share one toggle',
       'toggleTunnelCommand(' in body(ability, 'quickAction')
-      and 'export function toggleTunnel' in commands)
+      and 'export async function toggleTunnel' in commands)
 check('tray updates are rate limited',
       'MIN_UPDATE_MS' in body(tray, 'sync'))
 check('the tray reports the tunnel state',
@@ -892,6 +892,48 @@ check('every import path names a nameless configuration the same way',
 check('a nameless configuration is named after the host it connects to',
       'const host: string = t.peers[0].host.trim();' in tunnel_model
       and 't.name = host.length > 0 ? host : fallbackName;' in tunnel_model)
+
+# 31. The desktop card paints one of three layouts and the two that are not the
+#     wide one put the switch somewhere else (`2x2`: bottom-right corner, `1x2`:
+#     bottom-right of a strip). The layout is picked from a size, and the size of
+#     a card is only known to the launcher, so this is an audit of where the size
+#     comes from: recorded when the card is placed, asked for when it is updated
+#     or resized, reconciled against the launcher's own report, and never guessed.
+#     The guess used to be '2x2', and a 2x4 card that got it rendered the square
+#     page - the switch jumped to the right side.
+wg_ability = (ROOT / 'entry/src/main/ets/form/WgCardAbility.ets').read_text(encoding='utf-8')
+wg_refresh = (ROOT / 'entry/src/main/ets/form/CardRefresh.ets').read_text(encoding='utf-8')
+wg_registry = (ROOT / 'entry/src/main/ets/form/CardRegistry.ets').read_text(encoding='utf-8')
+wg_data = (ROOT / 'entry/src/main/ets/form/CardData.ets').read_text(encoding='utf-8')
+tunnel_store = (ROOT / 'entry/src/main/ets/service/TunnelStore.ets').read_text(encoding='utf-8')
+add_form = body(wg_ability, 'onAddForm')
+check('a placed card is recorded after the shared state is ready',
+      'CardData.init(this.context);' in add_form
+      and add_form.index('CardData.init(this.context);') < add_form.index('CardRegistry.put('))
+check('an updated card asks the launcher for its size instead of guessing',
+      'getPublishedRunningFormInfoById(' in body(wg_ability, 'onUpdateForm')
+      and "'2x2'" not in wg_ability)
+check('a card that is resized follows the grid at once',
+      'CardData.sizeOf(newDimension)' in body(wg_ability, 'onSizeChanged')
+      and 'CardRegistry.put(formId, size);' in body(wg_ability, 'onSizeChanged'))
+check('the recorded sizes are reconciled with the launcher before a push',
+      'getPublishedRunningFormInfos(' in wg_refresh
+      and 'CardRegistry.reconcile(' in wg_refresh
+      and 'withTimeout(' in body(wg_refresh, 'reconcile'))
+check('a card whose size nobody reported keeps its drawing',
+      'CardRegistry.knownSize(size)' in body(wg_refresh, 'push'))
+check('no layer fills a missing layout with a default',
+      'DEFAULT_SIZE' not in wg_registry
+      and "size === undefined || size === null ? ''" in wg_registry
+      and "existing === undefined ? '' : existing.size" in wg_registry
+      and 'CardRegistry.knownSize(size)' in body(wg_ability, 'renderKnown'))
+check('"connecting" needs a start request that is recent',
+      'TunnelStore.wantedRecently()' in wg_data
+      and 'TunnelStore.wantedRecently()' in tray)
+check('a start request is stamped when it is recorded',
+      'KEY_DESIRED_AT' in tunnel_store
+      and 'putSync(KEY_DESIRED_AT' in body(tunnel_store, 'setDesired')
+      and 'DESIRE_GRACE_MS' in body(tunnel_store, 'wantedRecently'))
 
 if failures:
     print('keep-alive audit:')

@@ -106,7 +106,7 @@ struct Monitoring {
     .height('100%')
     .backgroundColor(Palette.BACKGROUND)
     .bindSheet(this.sheet, this.intervalSheet(), {
-      height: SheetSize.MEDIUM,
+      height: SheetSize.FIT_CONTENT,
       dragBar: true,
       preferType: SheetType.BOTTOM,
       showClose: false,
@@ -123,41 +123,45 @@ struct Monitoring {
   private intervalSheet() {
     Column() {
       Row() {
+        // Same title as every other settings sheet: 16fp, 24vp inset, no fixed
+        // row height — this is a picker, not a screen header.
         Text(Tr.t('Refresh rate'))
-          .fontSize(Type.TITLE_LARGE)
+          .fontSize(Type.TITLE_MEDIUM)
           .fontFamily(FONT)
+          // Same size as the other sheets, but the heavier weight is what
+          // keeps it reading as the header over 14fp options.
           .fontWeight(FontWeight.Medium)
           .fontColor(Palette.ON_SURFACE)
           .layoutWeight(1)
       }
       .width('100%')
-      .height(56)
-      .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
+      .padding({ left: 24, right: 24, top: 8, bottom: 12 })
       .alignItems(VerticalAlign.Center)
 
-      Scroll() {
-        Column() {
-          ForEach(INTERVALS, (ms: number) => {
-            SurfaceRow({
-              title: ms === 1000 ? Tr.t('1 second')
-                : `${ms < 1000 ? ms : ms / 1000} ${ms < 1000 ? 'ms' : Tr.t('Seconds').toLowerCase()}`,
-              trailingText: this.interval === ms ? Tr.t('Selected') : '',
-              onTap: () => {
-                this.interval = ms;
-                SettingsStore.setStatsInterval(ms);
-                this.sheet = false;
-              }
-            })
-          }, (ms: number) => `${ms}-${this.interval === ms}`)
-        }
-        .width('100%')
+      // A picker with a handful of rows sizes itself: a `Scroll` needs a
+      // bounded height, so under `FIT_CONTENT` the rows sit in a plain column.
+      Column() {
+        ForEach(INTERVALS, (ms: number) => {
+          SurfaceRow({
+            title: ms === 1000 ? Tr.t('1 second')
+              : `${ms < 1000 ? ms : ms / 1000} ${ms < 1000 ? 'ms' : Tr.t('Seconds').toLowerCase()}`,
+            compact: true,
+            // The chosen option is the one marked in the accent colour; the word
+            // stays for anyone who reads colours poorly.
+            tint: this.interval === ms ? Palette.PRIMARY : Palette.ON_SURFACE,
+            trailingText: this.interval === ms ? Tr.t('Selected') : '',
+            onTap: () => {
+              this.interval = ms;
+              SettingsStore.setStatsInterval(ms);
+              this.sheet = false;
+            }
+          })
+        }, (ms: number) => `${ms}-${this.interval === ms}`)
       }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
+      .width('100%')
     }
     .width('100%')
-    .height('100%')
+    .padding({ bottom: 48 })
     .backgroundColor(Palette.BACKGROUND)
   }
 }

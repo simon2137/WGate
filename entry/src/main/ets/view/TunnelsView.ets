@@ -705,10 +705,12 @@ export struct TunnelsView {
       this.actionRow(Tr.t('Delete group and tunnels'), $r('app.media.ic_delete'), Palette.ALERT, () => {
         this.deleteGroupAndTunnels();
       })
-      Blank()
     }
     .width('100%')
-    .height('100%')
+    // `FIT_CONTENT` needs the body to size itself: a leftover `height('100%')`
+    // still stretched the sheet to the whole screen, which is exactly how the
+    // group menu kept looking unchanged.
+    .padding({ bottom: 48 })
     .backgroundColor(Palette.BACKGROUND)
   }
 
@@ -734,10 +736,9 @@ export struct TunnelsView {
       this.actionRow(Tr.t('Sort by latency'), $r('app.media.ic_bolt'), Palette.ON_SURFACE, () => {
         this.sortByLatency();
       })
-      Blank()
     }
     .width('100%')
-    .height('100%')
+    .padding({ bottom: 48 })
     .backgroundColor(Palette.BACKGROUND)
   }
 
@@ -994,10 +995,9 @@ export struct TunnelsView {
       this.actionRow(Tr.t('Delete'), $r('app.media.ic_delete'), Palette.ALERT, () => {
         this.deleteSelected();
       })
-      Blank()
     }
     .width('100%')
-    .height('100%')
+    .padding({ bottom: 48 })
     .backgroundColor(Palette.BACKGROUND)
   }
 
@@ -1038,9 +1038,13 @@ export struct TunnelsView {
       .width('100%')
       .padding({ left: 24, right: 24, bottom: 12 })
 
-      List() {
-        ForEach(this.groups, (name: string) => {
-          ListItem() {
+      // The name field and the "create" button are the whole sheet; the list is as
+      // tall as the groups it holds. `FIT_CONTENT` needs that, and a `List` needs a
+      // bounded height, so a `Scroll` capped at 320vp stands in for it: short lists
+      // shrink to nothing, long ones scroll.
+      Scroll() {
+        Column() {
+          ForEach(this.groups, (name: string) => {
             Row() {
               Image($r('app.media.ic_folder'))
                 .width(20)
@@ -1059,14 +1063,17 @@ export struct TunnelsView {
             .onClick(() => {
               this.moveSelectedTo(name);
             })
-          }
-        }, (name: string) => name)
+          }, (name: string) => name)
+        }
+        .width('100%')
       }
-      .layoutWeight(1)
+      .width('100%')
+      .constraintSize({ maxHeight: 320 })
       .scrollBar(BarState.Off)
+      .align(Alignment.Top)
     }
     .width('100%')
-    .height('100%')
+    .padding({ bottom: 48 })
     .backgroundColor(Palette.BACKGROUND)
   }
 
@@ -1109,7 +1116,7 @@ export struct TunnelsView {
     .height('100%')
     .backgroundColor(Palette.BACKGROUND)
     .bindSheet(this.sheet !== SHEET_NONE, this.sheetBody(), {
-      height: SheetSize.MEDIUM,
+      height: this.sheetHeight(),
       dragBar: true,
       preferType: SheetType.BOTTOM,
       showClose: false,
@@ -1119,6 +1126,22 @@ export struct TunnelsView {
         this.sheet = SHEET_NONE;
       }
     })
+  }
+
+  /**
+   * How tall this sheet should be.
+   *
+   * The reorder sheet (two rows) and the group menu (a field and three rows) have a
+   * known height; a `MEDIUM` sheet left most of a screen empty under them. The
+   * selection actions and the group list depend on what is on screen, so they keep
+   * the half sheet.
+   */
+  private sheetHeight(): SheetSize {
+    if (this.sheet === SHEET_SORT || this.sheet === SHEET_GROUP_ACTIONS ||
+      this.sheet === SHEET_GROUPS || this.sheet === SHEET_ACTIONS) {
+      return SheetSize.FIT_CONTENT;
+    }
+    return SheetSize.MEDIUM;
   }
 
   @Builder

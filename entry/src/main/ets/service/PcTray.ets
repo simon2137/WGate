@@ -253,8 +253,11 @@ export class PcTray {
     if (status !== null && status.state === 'up') {
       return 'up';
     }
-    const wanted: string = TunnelStore.desiredId();
-    if (wanted.length > 0 || (status !== null && isRunning(status.state))) {
+    // The desired id alone is not a request in flight: the store keeps it for the
+    // guard and the next launch, so a tunnel the system reclaimed without
+    // `onDestroy` left the hover text on "正在连接" for good. `wantedRecently` is
+    // the same deadline the desktop card reads.
+    if (TunnelStore.wantedRecently() || (status !== null && isRunning(status.state))) {
       return 'busy';
     }
     return 'off';

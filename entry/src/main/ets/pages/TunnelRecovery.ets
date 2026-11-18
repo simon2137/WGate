@@ -105,7 +105,7 @@ struct TunnelRecovery {
     .height('100%')
     .backgroundColor(Palette.BACKGROUND)
     .bindSheet(this.sheet, this.delaySheet(), {
-      height: SheetSize.MEDIUM,
+      height: SheetSize.FIT_CONTENT,
       dragBar: true,
       preferType: SheetType.BOTTOM,
       showClose: false,
@@ -122,39 +122,44 @@ struct TunnelRecovery {
   delaySheet() {
     Column() {
       Row() {
+        // Same title as every other settings sheet: 16fp, 24vp inset, no fixed
+        // row height — this is a picker, not a screen header.
         Text(Tr.t('Seamless recovery delay'))
-          .fontSize(Type.TITLE_LARGE)
+          .fontSize(Type.TITLE_MEDIUM)
           .fontFamily(FONT)
+          // Same size as the other sheets, but the heavier weight is what
+          // keeps it reading as the header over 14fp options.
           .fontWeight(FontWeight.Medium)
           .fontColor(Palette.ON_SURFACE)
           .layoutWeight(1)
       }
       .width('100%')
-      .height(56)
-      .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
+      .padding({ left: 24, right: 24, top: 8, bottom: 12 })
       .alignItems(VerticalAlign.Center)
 
-      Scroll() {
-        Column() {
-          ForEach(DELAYS, (seconds: number) => {
-            SurfaceRow({
-              title: seconds === 1 ? Tr.t('1 second')
-                : `${seconds} ${Tr.t('Seconds').toLowerCase()}`,
-              trailingText: this.delay === seconds ? Tr.t('Selected') : '',
-              onTap: () => {
-                this.delay = seconds;
-                SettingsStore.setRecoveryDelay(seconds);
-                this.sheet = false;
-              }
-            })
-          }, (seconds: number) => `${seconds}-${this.delay === seconds}`)
-        }
-        .width('100%')
+      // A picker with a handful of rows sizes itself: a `Scroll` needs a
+      // bounded height, so under `FIT_CONTENT` the rows sit in a plain column.
+      Column() {
+        ForEach(DELAYS, (seconds: number) => {
+          SurfaceRow({
+            title: seconds === 1 ? Tr.t('1 second')
+              : `${seconds} ${Tr.t('Seconds').toLowerCase()}`,
+            compact: true,
+            // The chosen option is the one marked in the accent colour; the word
+            // stays for anyone who reads colours poorly.
+            tint: this.delay === seconds ? Palette.PRIMARY : Palette.ON_SURFACE,
+            trailingText: this.delay === seconds ? Tr.t('Selected') : '',
+            onTap: () => {
+              this.delay = seconds;
+              SettingsStore.setRecoveryDelay(seconds);
+              this.sheet = false;
+            }
+          })
+        }, (seconds: number) => `${seconds}-${this.delay === seconds}`)
       }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
+      .width('100%')
     }
     .width('100%')
+    .padding({ bottom: 48 })
   }
 }

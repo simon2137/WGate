@@ -16,6 +16,7 @@ import {
 import { Palette, Type, ROW_PAD_H , FONT, applyScheme, resolveTheme, isLightScheme, glassCore, glassHalo, followSystemAppearance} from '../theme/Theme';
 import { BottomNav, navWidth } from '../components/BottomNav';
 import { PinLockPad } from '../components/PinLockPad';
+import { NameTunnelSheet } from '../components/NameTunnelSheet';
 import { SurfaceRow, SectionHeader } from '../components/SurfaceRow';
 import { TunnelsView } from '../view/TunnelsView';
 import { AutoTunnelView } from '../view/AutoTunnelView';
@@ -31,6 +32,8 @@ const SHEET_DETAIL: string = 'detail';
 const SHEET_LOGS: string = 'logs';
 const SHEET_APPEARANCE: string = 'appearance';
 const SHEET_PREFERRED: string = 'preferred';
+/** The naming step an import ends in; the same sheet, a different body. */
+const SHEET_NAME: string = 'name';
 
 const THEMES: string[] = ['automatic', 'dark', 'darker', 'amoled'];
 
@@ -39,6 +42,30 @@ const TAB_TRANSITION: TransitionEffect = TransitionEffect
   .translate({ y: 24 })
   .combine(TransitionEffect.OPACITY)
   .animation({ duration: 280, curve: Curve.EaseOut });
+
+/**
+ * What one import produced: the tunnel that is now stored, and whether it is new.
+ *
+ * Importing a configuration that is already there updates it instead of piling up
+ * duplicates, and an update must not be renamed by the dialog: the name the user
+ * gave that tunnel once is the one it keeps.
+ */
+interface Imported {
+  tunnel: WgTunnel;
+  created: boolean;
+}
+
+/** One pending naming question, settled by the dialog or by its dismissal. */
+class NameRequest {
+  tunnel: WgTunnel;
+  resolve: (name: string) => void;
+  settled: boolean = false;
+
+  constructor(tunnel: WgTunnel, resolve: (name: string) => void) {
+    this.tunnel = tunnel;
+    this.resolve = resolve;
+  }
+}
 
 /**
  * The four-tab shell, matching the reference app's `MainScreen`:
@@ -83,6 +110,18 @@ struct Home {
   /** Set while the PIN lock is in front of the tabs. */
   @State locked: boolean = false;
   @State pinError: string = '';
+  /**
+   * The import waiting for a name, and whether the dialog can be shown yet.
+   *
+   * The add sheet is modal too, so opening the naming dialog while it is still on
+   * screen puts two modals in the same frame and the field loses the keyboard.
+   * `askName` therefore queues the question and the sheet's `onDisappear` releases
+   * it. Neither field is painted, so neither is state.
+   */
+  private nameRequest: NameRequest | null = null;
+  private nameQueued: boolean = false;
+  /** The tunnel the naming body is asking about. */
+  @State private nameTunnel: WgTunnel = new WgTunnel();
 
   aboutToAppear(): void {
     const context = getContext(this) as common.UIAbilityContext;
@@ -216,8 +255,11 @@ struct Home {
   /**
    * Stores one configuration text. Re-importing the same keys and endpoint
    * updates the existing tunnel instead of piling up duplicates.
+   *
+   * `created` is what decides whether the naming dialog appears: a tunnel the user
+   * already named is not asked about again, no matter which import path found it.
    */
-  private storeImported(text: string, fallbackName: string): WgTunnel | null {
+  private storeImported(text: string, fallbackName: string): Imported | null {
     const raw: string = text.trim();
     if (raw.length === 0) {
       return null;
@@ -226,6 +268,7 @@ struct Home {
     if (parsed === null) {
       return null;
     }
+    let created: boolean = true;
     const existing: WgTunnel[] = TunnelStore.list();
     for (let i = 0; i < existing.length; i++) {
       const other: WgTunnel = existing[i];
@@ -234,12 +277,15 @@ struct Home {
           other.peers[0].port === parsed.peers[0].port) {
         parsed.id = other.id;
         parsed.name = other.name;
+        created = false;
         break;
       }
     }
     TunnelStore.save(parsed);
+    // Written right after the store so the audit can measure save -> dialog.
+    Diag.write(`import: saved ${parsed.id} t=${Date.now()}`);
     this.applyInterfaceDefaults(parsed, raw);
-    return parsed;
+    return { tunnel: parsed, created: created };
   }
 
   /**
@@ -270,8 +316,8 @@ struct Home {
 
   /** Stores one pasted configuration, or says why it is not one. */
   private importPasted(text: string): void {
-    const tunnel: WgTunnel | null = this.storeImported(text, Tr.t('Imported configuration'));
-    if (tunnel === null) {
+    const result: Imported | null = this.storeImported(text, Tr.t('Imported configuration'));
+    if (result === null) {
       // The sheet covers the page, so its toast would never be seen: the reason
       // goes into the sheet itself and the box keeps what was pasted.
       this.pasteError = Tr.t('That is not a WireGuard configuration');
@@ -281,8 +327,17 @@ struct Home {
     this.pasteText = '';
     this.pasteMode = false;
     this.sheet = SHEET_NONE;
+    if (result.created) {
+      // Closing the sheet first matters: `askName` waits for its onDisappear, so
+      // the naming dialog is opened onto a page that is no longer covered.
+      this.askName(result.tunnel).then(() => {
+        this.reload();
+        this.flash(Tr.tf('Imported %1$s', result.tunnel.name));
+      });
+      return;
+    }
     this.reload();
-    this.flash(Tr.tf('Imported %1$s', tunnel.name));
+    this.flash(Tr.tf('Imported %1$s', result.tunnel.name));
   }
 
   /** A picked document, read as UTF-8 text. */
@@ -324,10 +379,20 @@ struct Home {
           : Tr.t('That zip holds no configuration'));
         return;
       }
-      const tunnel: WgTunnel | null = this.storeImported(this.readPickedText(uri), Tr.t('Imported configuration'));
+      const result: Imported | null =
+        this.storeImported(this.readPickedText(uri), Tr.t('Imported configuration'));
+      if (result === null) {
+        this.reload();
+        this.flash(Tr.t('That file is not a WireGuard configuration'));
+        return;
+      }
+      if (result.created) {
+        // The add sheet is already gone here — the picker outlived its closing
+        // animation — so the question can open straight away.
+        await this.askName(result.tunnel);
+      }
       this.reload();
-      this.flash(tunnel === null ? Tr.t('That file is not a WireGuard configuration')
-        : Tr.tf('Imported %1$s', tunnel.name));
+      this.flash(Tr.tf('Imported %1$s', result.tunnel.name));
     } catch (e) {
       Diag.write(`import: file failed: ${e}`);
       this.flash(Tr.t('Could not read that file'));
@@ -344,23 +409,59 @@ struct Home {
     const work: string = `${context.cacheDir}/import-${Date.now()}`;
     const out: string = `${work}/out`;
     fileIo.mkdirSync(work);
+    // `decompressFile` extracts into an existing directory; it rejects a path it
+    // would have to create (`900002: destination path is not an existing
+    // directory`), which is what kept every zip import failing on this platform.
+    fileIo.mkdirSync(out);
     try {
-      fileIo.copyFileSync(uri, `${work}/bundle.zip`);
+      // The picker hands over a `file://docs/...` URI that only the descriptor it
+      // granted may open. `copyFileSync` resolves the URI as a path and fails with
+      // ENOENT (`import: file failed: No such file or directory`), so the archive
+      // is copied through its own descriptor.
+      const source = fileIo.openSync(uri, fileIo.OpenMode.READ_ONLY);
+      try {
+        const stat = fileIo.statSync(source.fd);
+        const buffer = new ArrayBuffer(stat.size);
+        const read: number = fileIo.readSync(source.fd, buffer);
+        const target = fileIo.openSync(`${work}/bundle.zip`,
+          fileIo.OpenMode.CREATE | fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.TRUNC);
+        fileIo.writeSync(target.fd, buffer.slice(0, read));
+        fileIo.closeSync(target);
+      } finally {
+        fileIo.closeSync(source);
+      }
       await zlib.decompressFile(`${work}/bundle.zip`, out);
-      const queue: string[] = [out];
-      let count: number = 0;
-      while (queue.length > 0) {
-        const folder: string = queue.pop() as string;
+      // Collect first, import after. The archive's order is whatever the zip tool
+      // wrote — `tunnels-5.zip` stores e,d,c,b,a — and naming five tunnels in an
+      // order nobody can predict is impossible to follow, so the file order is
+      // what the questions follow.
+      const folders: string[] = [out];
+      const paths: string[] = [];
+      while (folders.length > 0) {
+        const folder: string = folders.pop() as string;
         const names: string[] = fileIo.listFileSync(folder);
         for (let i = 0; i < names.length; i++) {
           const path: string = `${folder}/${names[i]}`;
           if (fileIo.statSync(path).isDirectory()) {
-            queue.push(path);
+            folders.push(path);
           } else if (Home.isConfiguration(names[i])) {
-            if (this.storeImported(this.readPickedText(path), Tr.t('Imported configuration')) !== null) {
-              count++;
-            }
+            paths.push(path);
           }
+        }
+      }
+      paths.sort((left: string, right: string) => left < right ? -1 : (left > right ? 1 : 0));
+      let count: number = 0;
+      for (let i = 0; i < paths.length; i++) {
+        const result: Imported | null =
+          this.storeImported(this.readPickedText(paths[i]), Tr.t('Imported configuration'));
+        if (result === null) {
+          continue;
+        }
+        count++;
+        if (result.created) {
+          // One question at a time: the next file is imported only after this one
+          // has been named, so an answer can never land on the wrong tunnel.
+          await this.askName(result.tunnel);
         }
       }
       return count;
@@ -371,6 +472,103 @@ struct Home {
         Diag.write(`import: cache cleanup failed: ${e}`);
       }
     }
+  }
+
+  /**
+   * Asks for a newly imported tunnel's name.
+   *
+   * The answer is '' when the user keeps the endpoint name (Cancel, the mask, the
+   * back key), so the caller never has to tell "dismissed" from "left empty".
+   */
+  private askName(tunnel: WgTunnel): Promise<string> {
+    return new Promise<string>((resolve: (name: string) => void) => {
+      this.nameRequest = new NameRequest(tunnel, resolve);
+      this.nameQueued = true;
+      this.maybeOpenNaming();
+    });
+  }
+
+  /**
+   * Opens the queued question — but only once the add sheet is out of the way.
+   *
+   * Two panels in the same frame lose the keyboard and the focus ring, so the add
+   * sheet's `onDisappear` calls back here instead of the import opening the naming
+   * sheet itself.
+   */
+  private maybeOpenNaming(): void {
+    const request: NameRequest | null = this.nameRequest;
+    if (request === null || !this.nameQueued) {
+      return;
+    }
+    if (this.sheet !== SHEET_NONE) {
+      return;
+    }
+    this.nameQueued = false;
+    Diag.write(`import: naming dialog ${request.tunnel.id} t=${Date.now()}`);
+    // The same sheet surface the add panel uses, with the naming body in it: one
+    // mechanism for both steps, and the fields sit at the top where the keyboard
+    // cannot cover them.
+    this.nameTunnel = request.tunnel;
+    this.sheet = SHEET_NAME;
+  }
+
+  /**
+   * Applies the answer and releases the importer waiting for it.
+   *
+   * `settled` makes this idempotent: Save answers and then the sheet closes, and
+   * the dismissal callback that follows must not repaint the list twice.
+   */
+  private completeNaming(name: string, close: boolean): void {
+    const request: NameRequest | null = this.nameRequest;
+    if (request === null || request.settled) {
+      return;
+    }
+    request.settled = true;
+    this.nameRequest = null;
+    if (close) {
+      this.sheet = SHEET_NONE;
+    }
+    const trimmed: string = name.trim();
+    if (trimmed.length > 0 && trimmed !== request.tunnel.name) {
+      request.tunnel.name = trimmed;
+      TunnelStore.save(request.tunnel);
+      Diag.write(`import: named ${request.tunnel.id} as ${trimmed} t=${Date.now()}`);
+    }
+    this.reload();
+    request.resolve(name);
+  }
+
+  /**
+   * How tall this sheet should be.
+   *
+   * A fixed list (the four import options, the four themes) has a known height, so
+   * a `MEDIUM` sheet left a measured 200vp of dead space under it. Everything whose
+   * height depends on data — a tunnel's details, the engine log, the preferred
+   * tunnel list, the paste box — keeps the half sheet, where the extra room is
+   * where the content goes.
+   */
+  private sheetHeight(): SheetSize {
+    if (this.sheet === SHEET_NAME) {
+      return SheetSize.FIT_CONTENT;
+    }
+    if (this.sheet === SHEET_IMPORT) {
+      return SheetSize.FIT_CONTENT;
+    }
+    if (this.sheet === SHEET_APPEARANCE) {
+      return SheetSize.FIT_CONTENT;
+    }
+    return SheetSize.MEDIUM;
+  }
+
+  /** The body of the naming sheet; the sheet itself is a window-level surface. */
+  @Builder
+  private nameSheetBody() {
+    NameTunnelSheet({
+      tunnel: this.nameTunnel,
+      onDone: (name: string) => {
+        this.completeNaming(name, true);
+      }
+    })
   }
 
   /**
@@ -435,6 +633,47 @@ struct Home {
     .alignItems(VerticalAlign.Center)
   }
 
+  /**
+   * The paste box's own header — title only. The save action lives in the button
+   * under the text area: pasting means reading and correcting a block of text, and
+   * the button sits where the eye already is.
+   *
+   * It still reads state instead of taking a parameter: `pasteMode` flips *after*
+   * the sheet is already up (the clipboard read can be refused) and a builder
+   * parameter is captured when the row is first built, which is how the old title
+   * stayed on screen while the body had already switched to the text box.
+   */
+  @Builder
+  private pasteHeader() {
+    Row() {
+      Text(Tr.t('Paste config'))
+        .fontSize(Type.TITLE_LARGE)
+        .fontFamily(FONT)
+        .fontWeight(FontWeight.Medium)
+        .fontColor(Palette.ON_SURFACE)
+        .layoutWeight(1)
+      // The same save icon the settings sheets wear: this sheet takes a value and
+      // writes it, so the action lives in the header, not in a button underneath.
+      Row() {
+        Image($r('app.media.ic_save'))
+          .width(24)
+          .height(24)
+          .fillColor(Palette.PRIMARY)
+      }
+      .width(40)
+      .height(40)
+      .justifyContent(FlexAlign.Center)
+      .accessibilityText(Tr.t('Save'))
+      .onClick(() => {
+        this.commitPaste();
+      })
+    }
+    .width('100%')
+    .height(56)
+    .padding({ left: ROW_PAD_H, right: ROW_PAD_H })
+    .alignItems(VerticalAlign.Center)
+  }
+
   /** One row of the import sheet, the same shape as `TunnelImportSheet.kt`. */
   @Builder
   private importOption(icon: Resource, title: string, description: string, onTap: () => void) {
@@ -469,15 +708,24 @@ struct Home {
     .onClick(onTap)
   }
 
+  /** Saves the pasted configuration, or says why there is nothing to save. */
+  private commitPaste(): void {
+    if (this.pasteText.trim().length === 0) {
+      this.pasteError = Tr.t('Paste a configuration first');
+      return;
+    }
+    this.importPasted(this.pasteText);
+  }
+
   @Builder
   private importSheet() {
     Column() {
-      this.sheetHeader(this.pasteMode ? Tr.t('Paste config') : Tr.t('Add tunnel'))
       if (this.pasteMode) {
+        this.pasteHeader();
         this.pasteBox();
       } else {
-        Scroll() {
-          Column() {
+        this.sheetHeader(Tr.t('Add tunnel'));
+        Column() {
             this.importOption($r('app.media.ic_folder'), Tr.t('Add from file or zip'),
               Tr.t('.conf, .wg, or a zip of them'), () => {
                 this.importFromFileOrZip();
@@ -493,16 +741,12 @@ struct Home {
               this.sheet = SHEET_NONE;
               router.pushUrl({ url: 'pages/ConfigEdit' });
             })
-          }
-          .width('100%')
         }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-        .align(Alignment.Top)
+        .width('100%')
       }
     }
     .width('100%')
-    .height('100%')
+    .padding({ bottom: 48 })
   }
 
   /**
@@ -511,61 +755,47 @@ struct Home {
    */
   @Builder
   private pasteBox() {
-    Scroll() {
-      Column() {
-        if (this.pasteReason.length > 0) {
-          Text(this.pasteReason)
-            .fontSize(Type.BODY_SMALL)
-            .fontFamily(FONT)
-            .fontColor(Palette.MUTED)
-            .width('100%')
-            .padding({ left: ROW_PAD_H, right: ROW_PAD_H, bottom: 12 })
-        }
-        TextArea({
-          text: this.pasteText,
-          placeholder: '[Interface]\nPrivateKey = ...\nAddress = 10.66.0.2/32\n\n[Peer]\nPublicKey = ...\nEndpoint = host:51820\nAllowedIPs = 0.0.0.0/0'
-        })
+    Column() {
+      if (this.pasteReason.length > 0) {
+        Text(this.pasteReason)
           .fontSize(Type.BODY_SMALL)
-          .fontFamily('monospace')
-          .fontColor(Palette.ON_SURFACE)
-          .placeholderColor(Palette.MUTED)
-          .backgroundColor(Palette.SURFACE)
-          .borderRadius(8)
-          .height(220)
+          .fontFamily(FONT)
+          .fontColor(Palette.MUTED)
           .width('100%')
-          .padding(12)
-          .defaultFocus(true)
-          .onChange((value: string) => {
-            this.pasteText = value;
-            this.pasteError = '';
-          })
-        if (this.pasteError.length > 0) {
-          Text(this.pasteError)
-            .fontSize(Type.BODY_SMALL)
-            .fontFamily(FONT)
-            .fontColor(Palette.ALERT)
-            .width('100%')
-            .padding({ top: 8 })
-        }
-        Button(Tr.t('Save'))
-          .fontColor(Palette.ON_SURFACE)
-          .backgroundColor(Palette.RAISED)
-          .width('100%')
-          .margin({ top: 12 })
-          .onClick(() => {
-            if (this.pasteText.trim().length === 0) {
-              return;
-            }
-            this.importPasted(this.pasteText);
-          })
+          .padding({ left: ROW_PAD_H, right: ROW_PAD_H, bottom: 12 })
       }
-      .width('100%')
-      .padding({ left: ROW_PAD_H, right: ROW_PAD_H, bottom: 16 })
-      .alignItems(HorizontalAlign.Start)
+      TextArea({
+        text: this.pasteText,
+        placeholder: '[Interface]\nPrivateKey = ...\nAddress = 10.66.0.2/32\n\n[Peer]\nPublicKey = ...\nEndpoint = host:51820\nAllowedIPs = 0.0.0.0/0'
+      })
+        .fontSize(Type.BODY_SMALL)
+        .fontFamily('monospace')
+        .fontColor(Palette.ON_SURFACE)
+        .placeholderColor(Palette.MUTED)
+        .backgroundColor(Palette.SURFACE)
+        .borderRadius(8)
+        .height(220)
+        .width('100%')
+        .padding(12)
+        .defaultFocus(true)
+        .onChange((value: string) => {
+          this.pasteText = value;
+          this.pasteError = '';
+        })
+      if (this.pasteError.length > 0) {
+        Text(this.pasteError)
+          .fontSize(Type.BODY_SMALL)
+          .fontFamily(FONT)
+          .fontColor(Palette.ALERT)
+          .width('100%')
+          .padding({ top: 8 })
+      }
     }
-    .layoutWeight(1)
-    .scrollBar(BarState.Off)
-    .align(Alignment.Top)
+    .width('100%')
+    // The same 48vp foot the settings sheets use: the box (or its error line)
+    // keeps clear of the sheet's rounded bottom edge.
+    .padding({ left: ROW_PAD_H, right: ROW_PAD_H, bottom: 48 })
+    .alignItems(HorizontalAlign.Start)
   }
 
   @Builder
@@ -693,8 +923,7 @@ struct Home {
   private appearanceSheet() {
     Column() {
       this.sheetHeader(Tr.t('Appearance'))
-      Scroll() {
-        Column() {
+      Column() {
           ForEach(THEMES, (name: string) => {
             SurfaceRow({
               title: name.charAt(0).toUpperCase() + name.substring(1),
@@ -712,13 +941,9 @@ struct Home {
             .padding({ left: ROW_PAD_H, right: ROW_PAD_H, top: 16 })
         }
         .width('100%')
-      }
-      .layoutWeight(1)
-      .scrollBar(BarState.Off)
-      .align(Alignment.Top)
     }
     .width('100%')
-    .height('100%')
+    .padding({ bottom: 48 })
     .alignItems(HorizontalAlign.Start)
   }
 
@@ -761,6 +986,8 @@ struct Home {
       this.logsSheet();
     } else if (this.sheet === SHEET_APPEARANCE) {
       this.appearanceSheet();
+    } else if (this.sheet === SHEET_NAME) {
+      this.nameSheetBody();
     } else {
       this.preferredSheet();
     }
@@ -925,15 +1152,27 @@ struct Home {
     .backgroundColor(Palette.BACKGROUND)
     .padding({ top: this.safeTop })
     .bindSheet(this.sheet !== SHEET_NONE, this.sheetBody(), {
-      height: SheetSize.MEDIUM,
+      // The naming body asks one short question; a MEDIUM sheet gave it half a
+      // screen of empty background under the field.
+      height: this.sheetHeight(),
       dragBar: true,
       preferType: SheetType.BOTTOM,
       showClose: false,
       onWillDismiss: sheetWillDismiss('home'),
       backgroundColor: Palette.BACKGROUND,
       onDisappear: () => {
+        const wasNaming: boolean = this.sheet === SHEET_NAME;
         this.sheet = SHEET_NONE;
         this.pasteMode = false;
+        if (wasNaming) {
+          // Dragged away or dismissed with the back key: the tunnel keeps the
+          // endpoint name. A save already settled the request, so this is a no-op.
+          this.completeNaming('', false);
+          return;
+        }
+        // An import queued its naming question while this sheet was still up;
+        // now that it is gone the naming body can take the focus it needs.
+        this.maybeOpenNaming();
       }
     })
   }

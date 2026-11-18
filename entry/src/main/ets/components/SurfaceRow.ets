@@ -30,6 +30,13 @@ export struct SurfaceRow {
    * in the reference rows).
    */
   @Prop trailingIcon: Resource | null = null;
+  /**
+   * Dense list rows (a picker inside a sheet): 14fp title, 40vp minimum height and
+   * 6vp of vertical padding. A 16/16 pairing read as "the options are as big as
+   * the title", and page-sized spacing under it made the list look scattered
+   * rather than like one block of choices.
+   */
+  @Prop compact: boolean = false;
   @Prop hasSwitch: boolean = false;
   @Prop switchOn: boolean = false;
   onSwitch: (on: boolean) => void = () => {};
@@ -55,7 +62,7 @@ export struct SurfaceRow {
             .draggable(false)
         }
         Text(this.title)
-          .fontSize(Type.BODY_LARGE)
+          .fontSize(this.compact ? Type.BODY_MEDIUM : Type.BODY_LARGE)
           .fontFamily(FONT)
           .fontColor(this.tint)
           .maxLines(1)
@@ -103,7 +110,7 @@ export struct SurfaceRow {
         }
       }
       .width('100%')
-      .constraintSize({ minHeight: ROW_MIN_H })
+      .constraintSize({ minHeight: this.compact ? 40 : ROW_MIN_H })
       .alignItems(VerticalAlign.Center)
 
       if (this.description.length > 0) {
@@ -117,7 +124,12 @@ export struct SurfaceRow {
     }
     .alignItems(HorizontalAlign.Start)
     .width('100%')
-    .padding({ left: ROW_PAD_H, right: ROW_PAD_H, top: ROW_PAD_V, bottom: ROW_PAD_V })
+    .padding({
+      left: ROW_PAD_H,
+      right: ROW_PAD_H,
+      top: this.compact ? 6 : ROW_PAD_V,
+      bottom: this.compact ? 6 : ROW_PAD_V
+    })
     .backgroundColor(this.highlight ? '#1A76BEBD' : Palette.SURFACE)
     .onClick(() => {
       this.onTap();

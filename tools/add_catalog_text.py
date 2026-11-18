@@ -536,6 +536,26 @@ AUTHORED: dict[str, dict[str, str]] = {
         'zh_CN': '这不是 WireGuard 配置',
         'zh_TW': '這不是 WireGuard 配置',
     },
+    # The naming dialog every import path shows (components/NameTunnelDialog.ets).
+    # Its whole point is the promise in the second half, so the endpoint-derived
+    # name travels in `%1$s` and the sentence shows the real value instead of
+    # explaining a rule the user would have to imagine.
+    'Leave it empty and the tunnel is named after its endpoint: %1$s': {
+        'zh_CN': '留空则按端点命名：%1$s',
+        'zh_TW': '留空則按端點命名：%1$s',
+    },
+    # The naming sheet's title. The field's own label is the tunnel's name, so the
+    # sheet title names the action instead of repeating it.
+    'Name this tunnel': {
+        'zh_CN': '命名隧道',
+        'zh_TW': '命名隧道',
+    },
+    # The paste sheet's save icon, pressed with an empty box. The old bottom
+    # button simply did nothing; a silent no-op reads as a broken button.
+    'Paste a configuration first': {
+        'zh_CN': '请先粘贴配置',
+        'zh_TW': '請先貼上設定',
+    },
 }
 
 

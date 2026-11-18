@@ -186,10 +186,15 @@ export class CardData {
       }
     }
     const desired: string = TunnelStore.desiredId();
-    if (bound.length > 0 ? desired === bound : desired.length > 0) {
+    const asking: boolean = bound.length > 0 ? desired === bound : desired.length > 0;
+    if (asking && TunnelStore.wantedRecently()) {
       // A start was asked for and the extension has not published yet: the card
       // says "connecting" instead of dropping back to idle under the user's
-      // finger.
+      // finger. The store keeps the desire for the guard and the cold start, so
+      // only this reading has a deadline (see TunnelStore.wantedRecently): an old
+      // desire is not a request in flight, and the card falls through to the
+      // failure or idle state below instead of promising a connection nobody is
+      // making.
       return 'starting';
     }
     const failed: boolean = TunnelStore.lastError().length > 0 &&

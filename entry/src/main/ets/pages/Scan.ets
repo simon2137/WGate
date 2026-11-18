@@ -7,6 +7,9 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { customScan, detectBarcode, scanBarcode, scanCore } from '@kit.ScanKit';
 import { WgTunnel, parseWgQuick } from '../model/Tunnel';
 import { TunnelStore } from '../service/TunnelStore';
+import { Diag } from '../util/Diag';
+import { NameTunnelSheet } from '../components/NameTunnelSheet';
+import { Palette } from '../theme/Theme';
 import { Tr } from '../i18n/Tr';
 
 const DOMAIN: number = 0x0002;
@@ -39,6 +42,11 @@ struct Scan {
   private starting: boolean = false;
   private running: boolean = false;
   private handling: boolean = false;
+  /** Resolves the naming sheet; non-null exactly while the question is up. */
+  private nameResolver: ((name: string) => void) | null = null;
+  /** The naming sheet, and the tunnel it is asking about. */
+  @State private nameSheet: boolean = false;
+  @State private nameSheetTunnel: WgTunnel = new WgTunnel();
 
   aboutToAppear(): void {
     void this.requestCamera();
@@ -49,6 +57,9 @@ struct Scan {
   }
 
   aboutToDisappear(): void {
+    // A question still on screen would never be answered, and the awaiting
+    // caller would keep this page alive for it.
+    this.settleName('', false);
     void this.stopScanning();
   }
 
@@ -151,11 +162,14 @@ struct Scan {
       return;
     }
     hilog.info(DOMAIN, TAG, `decoded ${text.length} chars`);
-    this.apply(text);
+    this.apply(text).catch((err: Error) => {
+      hilog.warn(DOMAIN, TAG, `apply failed: ${err.message}`);
+      this.handling = false;
+    });
   }
 
   /** Decoded text is always a wg-quick configuration in this client. */
-  private apply(text: string): void {
+  private async apply(text: string): Promise<void> {
     if (this.handling) {
       return;
     }
@@ -173,6 +187,7 @@ struct Scan {
     }
     const same = TunnelStore.list().find((t: WgTunnel) =>
       t.privateKey === parsed.privateKey && t.endpoint() === parsed.endpoint());
+    const created: boolean = same === undefined;
     if (same !== undefined) {
       // Updating an existing tunnel keeps the name the user gave it; the parsed
       // one is only the placeholder every configuration without a name gets.
@@ -180,10 +195,64 @@ struct Scan {
       parsed.name = same.name;
     }
     TunnelStore.save(parsed);
+    Diag.write(`import: saved ${parsed.id} t=${Date.now()}`);
     hilog.info(DOMAIN, TAG, `saved ${parsed.id} peers=${parsed.peers.length}`);
-    void this.stopScanning();
+    // The camera goes away before the question appears, and this page stays put
+    // until the question is answered: a dialog opened after `router.back()` would
+    // be attached to a page that no longer exists.
+    await this.stopScanning();
+    if (created) {
+      const name: string = await this.askName(parsed);
+      const trimmed: string = name.trim();
+      if (trimmed.length > 0 && trimmed !== parsed.name) {
+        parsed.name = trimmed;
+        TunnelStore.save(parsed);
+        Diag.write(`import: named ${parsed.id} as ${trimmed} t=${Date.now()}`);
+      }
+    }
     this.toast(`${Tr.t('Imported')} ${parsed.name}`);
+    this.handling = false;
     router.back();
+  }
+
+  /**
+   * Asks for the scanned tunnel's name.
+   *
+   * `handling` stays true for the whole question, so a frame the camera still
+   * delivers cannot import the same code twice; the resolver is released with ''
+   * if the page goes away while the dialog is up.
+   */
+  private askName(tunnel: WgTunnel): Promise<string> {
+    return new Promise<string>((resolve: (name: string) => void) => {
+      this.nameResolver = resolve;
+      Diag.write(`import: naming dialog ${tunnel.id} t=${Date.now()}`);
+      this.nameSheetTunnel = tunnel;
+      this.nameSheet = true;
+    });
+  }
+
+  private settleName(name: string, close: boolean): void {
+    if (close) {
+      // Closing the sheet runs its own onDisappear, which lands back here with an
+      // empty answer; the resolver is already gone by then, so it is ignored.
+      this.nameSheet = false;
+    }
+    const resolve: ((name: string) => void) | null = this.nameResolver;
+    this.nameResolver = null;
+    if (resolve !== null) {
+      resolve(name);
+    }
+  }
+
+  /** The body of the naming sheet; the sheet itself is a window-level surface. */
+  @Builder
+  private nameSheetBody() {
+    NameTunnelSheet({
+      tunnel: this.nameSheetTunnel,
+      onDone: (name: string) => {
+        this.settleName(name, true);
+      }
+    })
   }
 
   private async resume(): Promise<void> {
@@ -397,5 +466,18 @@ struct Scan {
     .height('100%')
     .backgroundColor('#0E1621')
     .padding({ top: this.safeTop })
+    .bindSheet(this.nameSheet, this.nameSheetBody(), {
+      height: SheetSize.FIT_CONTENT,
+      dragBar: true,
+      preferType: SheetType.BOTTOM,
+      showClose: false,
+      backgroundColor: Palette.SURFACE,
+      onDisappear: () => {
+        this.nameSheet = false;
+        // A drag-dismiss or the back key keeps the endpoint name; the resolver is
+        // already released after Save, so this is a no-op then.
+        this.settleName('', false);
+      }
+    })
   }
 }
